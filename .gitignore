@@ -1,0 +1,7 @@
+# Cargo
+/target
+Cargo.lock
+
+# IntelliJ IDEA
+.idea/**/discord.xml
+.idea/**/workspace.xml

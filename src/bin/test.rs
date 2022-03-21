@@ -1,0 +1,17 @@
+use firn::arch::x86;
+use firn::cpu::Cpu;
+use firn::mem::{BasicMem, Eeprom, MemMap, MemRange};
+use firn::{mem, System};
+
+fn main() {
+    let mem = BasicMem::new(640 * 1024);
+    let eeprom = Eeprom::new(mem::DEFAULT_BIOS);
+
+    let mut map = MemMap::new(1024 * 1024);
+    map.map(MemRange::from_memory_full(&mem), mem);
+    map.map(MemRange::new(0xc0000, 0xfffff), eeprom);
+
+    let system = System::new(map);
+    let mut cpu = x86::Cpu::new(system);
+    cpu.run();
+}
