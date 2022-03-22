@@ -108,6 +108,16 @@ pub struct Modrm {
     pub reg_mem: RegMem,
 }
 
+// TODO: Separate everything else into functions like this
+pub fn decode_reg_8(modrm: u8) -> GeneralByteReg {
+    let r = (modrm / 0o10) % 0o10;
+
+    match GeneralByteReg::from_u8(r) {
+        Some(reg) => reg,
+        None => panic!("invalid r (in xrm octal) in ModRM byte: {}", r),
+    }
+}
+
 impl Modrm {
     pub fn decode(cpu: &mut Cpu, modrm: u8, reg_type: Option<ModrmRegType>, rm_size: Size) -> Self {
         let x = (modrm / 0o100) % 0o10;
@@ -115,10 +125,7 @@ impl Modrm {
         let m = modrm % 0o10;
 
         let reg = reg_type.map(|reg_type| match reg_type {
-            ModrmRegType::ByteSized => match GeneralByteReg::from_u8(r) {
-                Some(reg) => reg.into(),
-                None => panic!("invalid r (in xrm octal) in ModRM byte: {}", r),
-            },
+            ModrmRegType::ByteSized => decode_reg_8(modrm).into(),
             ModrmRegType::WordSized => match GeneralWordReg::from_u8(r) {
                 Some(reg) => reg.into(),
                 None => panic!("invalid r (in xrm octal) in ModRM byte: {}", r),

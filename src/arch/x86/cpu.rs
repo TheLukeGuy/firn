@@ -2,13 +2,47 @@ use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
 use crate::arch::x86::{GeneralByteReg, Instr, SegmentReg, WordReg};
 use crate::{cpu, System};
 
+pub struct Flags {
+    pub carry: bool,
+    pub parity: bool,
+    pub adjust: bool,
+    pub zero: bool,
+    pub sign: bool,
+    pub trap: bool,
+    pub interrupt: bool,
+    pub direction: bool,
+    pub overflow: bool,
+}
+
+impl Flags {
+    pub fn new() -> Self {
+        Self {
+            carry: false,
+            parity: false,
+            adjust: false,
+            zero: false,
+            sign: false,
+            trap: false,
+            interrupt: false,
+            direction: false,
+            overflow: false,
+        }
+    }
+}
+
+impl Default for Flags {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct Cpu {
     pub system: System,
 
     regs: [u8; 2 * 8],
     segments: [u16; 4],
 
-    pub flags: u16,
+    pub flags: Flags,
     pub ip: u16,
 }
 
@@ -18,7 +52,7 @@ impl Cpu {
             system,
             regs: [0; 2 * 8],
             segments: [0; 4],
-            flags: 0,
+            flags: Flags::new(),
             ip: 0,
         }
     }

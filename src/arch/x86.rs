@@ -4,7 +4,7 @@ pub mod modrm;
 pub mod opcodes;
 pub mod regs;
 
-pub use cpu::Cpu;
+pub use cpu::{Cpu, Flags};
 pub use instr::{Instr, InstrFunc};
 pub use modrm::{Displacement, Modrm, ModrmRegType, RegMem, RmPtr};
 pub use regs::{GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, WordReg};
