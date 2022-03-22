@@ -1,6 +1,8 @@
 use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
 use crate::arch::x86::{GeneralByteReg, Instr, SegmentReg, WordReg};
 use crate::{cpu, System};
+use std::io;
+use std::io::Write;
 
 pub struct Flags {
     pub carry: bool,
@@ -149,6 +151,9 @@ impl cpu::Cpu for Cpu {
     }
 
     fn step(&mut self) {
+        print!("({:#x}) ", self.linear_mem(Cs, self.ip));
+        io::stdout().flush().unwrap();
+
         let instr = Instr::decode(self);
         println!("Decoded: {:?}", instr);
         instr.execute(self);

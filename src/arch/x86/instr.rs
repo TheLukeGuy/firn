@@ -1,6 +1,7 @@
-use crate::arch::x86::{opcodes, Cpu, GeneralByteReg};
+use crate::arch::x86::{opcodes, Cpu, GeneralByteReg, GeneralWordReg, RegMem, SegmentReg};
 use std::fmt::{Debug, Formatter};
 
+pub mod arith;
 pub mod control;
 pub mod flags;
 pub mod transfer;
@@ -26,6 +27,16 @@ pub enum Instr {
         reg: GeneralByteReg,
         imm: u8,
     },
+    AlMoffs8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, segment: SegmentReg, offset: u16)>,
+        segment: SegmentReg,
+        offset: u16,
+    },
+    Rm16R16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, reg: GeneralWordReg)>,
+        rm: RegMem,
+        reg: GeneralWordReg,
+    },
 }
 
 impl Instr {
@@ -42,6 +53,12 @@ impl Instr {
                 segment,
             } => func.0(cpu, offset, segment),
             Instr::R8Imm8 { func, reg, imm } => func.0(cpu, reg, imm),
+            Instr::AlMoffs8 {
+                func,
+                segment,
+                offset,
+            } => func.0(cpu, segment, offset),
+            Instr::Rm16R16 { func, rm, reg } => func.0(cpu, rm, reg),
         }
     }
 }

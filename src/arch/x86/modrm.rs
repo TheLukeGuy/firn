@@ -1,6 +1,8 @@
 use crate::arch::x86::GeneralWordReg::{Bp, Bx, Di, Si};
 use crate::arch::x86::SegmentReg::{Ds, Ss};
-use crate::arch::x86::{Cpu, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size};
+use crate::arch::x86::{
+    Cpu, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, WordReg,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub enum ModrmRegType {
@@ -9,13 +11,13 @@ pub enum ModrmRegType {
     Segment,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Displacement {
     SignedByte(i8),
     UnsignedWord(u16),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct RmPtr {
     segment: SegmentReg,
     first_reg: Option<GeneralWordReg>,
@@ -42,7 +44,7 @@ impl RmPtr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum RegMem {
     Reg(GeneralReg),
     Ptr(RmPtr),
@@ -109,7 +111,7 @@ pub struct Modrm {
 }
 
 // TODO: Separate everything else into functions like this
-pub fn decode_reg_8(modrm: u8) -> GeneralByteReg {
+pub fn decode_byte_reg(modrm: u8) -> GeneralByteReg {
     let r = (modrm / 0o10) % 0o10;
 
     match GeneralByteReg::from_u8(r) {
@@ -125,7 +127,7 @@ impl Modrm {
         let m = modrm % 0o10;
 
         let reg = reg_type.map(|reg_type| match reg_type {
-            ModrmRegType::ByteSized => decode_reg_8(modrm).into(),
+            ModrmRegType::ByteSized => decode_byte_reg(modrm).into(),
             ModrmRegType::WordSized => match GeneralWordReg::from_u8(r) {
                 Some(reg) => reg.into(),
                 None => panic!("invalid r (in xrm octal) in ModRM byte: {}", r),
@@ -185,6 +187,14 @@ impl Modrm {
                 second_reg,
                 displacement,
             }),
+        }
+    }
+
+    // TODO: Methods like this for everything else
+    pub fn word_reg(&self) -> GeneralWordReg {
+        match self.reg {
+            Some(Reg::Word(WordReg::General(reg))) => reg,
+            _ => panic!("cannot get a word-sized register from a non-word-sized ModRM"),
         }
     }
 }
