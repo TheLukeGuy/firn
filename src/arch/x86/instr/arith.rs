@@ -7,5 +7,6 @@ pub fn xor_rm16_r16(cpu: &mut Cpu, rm: RegMem, reg: GeneralWordReg) {
 }
 
 pub fn cmp_al_imm8(cpu: &mut Cpu, imm: u8) {
-    // TODO
+    // TODO: Implement CMP AL, imm8
+    let _ = (cpu, imm);
 }

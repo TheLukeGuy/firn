@@ -1,5 +1,5 @@
 use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::arch::x86::{GeneralByteReg, Instr, SegmentReg, WordReg};
+use crate::arch::x86::{Device, GeneralByteReg, Instr, Port, PortMatchResult, SegmentReg, WordReg};
 use crate::{cpu, System};
 use std::io;
 use std::io::Write;
@@ -46,16 +46,22 @@ pub struct Cpu {
 
     pub flags: Flags,
     pub ip: u16,
+
+    devices: Vec<Box<dyn Device>>,
 }
 
 impl Cpu {
     pub fn new(system: System) -> Self {
         Self {
             system,
+
             regs: [0; 2 * 8],
             segments: [0; 4],
+
             flags: Flags::new(),
             ip: 0,
+
+            devices: Vec::new(),
         }
     }
 
@@ -131,6 +137,20 @@ impl Cpu {
         self.ip += 2;
 
         value
+    }
+
+    pub fn add_device(&mut self, device: impl Device + 'static) {
+        self.devices.push(Box::new(device));
+    }
+
+    pub fn match_port(&mut self, port: Port) {
+        for device in &mut self.devices {
+            if let PortMatchResult::Matched = device.match_port(port) {
+                return;
+            }
+        }
+
+        println!("Unhandled port: {:?}", port);
     }
 
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {

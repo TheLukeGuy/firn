@@ -1,4 +1,5 @@
 use firn::arch::x86;
+use firn::arch::x86::device::Cmos;
 use firn::cpu::Cpu;
 use firn::mem::{BasicMem, Eeprom, MemDump, MemMap, MemRange};
 use firn::{mem, System};
@@ -15,5 +16,9 @@ fn main() {
 
     let system = System::new(map);
     let mut cpu = x86::Cpu::new(system);
+
+    let cmos = Cmos::new();
+    cpu.add_device(cmos);
+
     cpu.run();
 }
