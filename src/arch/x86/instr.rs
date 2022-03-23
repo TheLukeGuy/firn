@@ -4,6 +4,7 @@ use std::fmt::{Debug, Formatter};
 pub mod arith;
 pub mod control;
 pub mod flags;
+pub mod ports;
 pub mod transfer;
 
 pub struct InstrFunc<F>(pub F);
@@ -27,7 +28,7 @@ pub enum Instr {
         reg: GeneralByteReg,
         imm: u8,
     },
-    AlMoffs8 {
+    Moffs8 {
         func: InstrFunc<fn(cpu: &mut Cpu, segment: SegmentReg, offset: u16)>,
         segment: SegmentReg,
         offset: u16,
@@ -36,6 +37,15 @@ pub enum Instr {
         func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, reg: GeneralWordReg)>,
         rm: RegMem,
         reg: GeneralWordReg,
+    },
+    Imm8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, imm: u8)>,
+        imm: u8,
+    },
+    Rm8R8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, reg: GeneralByteReg)>,
+        rm: RegMem,
+        reg: GeneralByteReg,
     },
 }
 
@@ -53,12 +63,14 @@ impl Instr {
                 segment,
             } => func.0(cpu, offset, segment),
             Instr::R8Imm8 { func, reg, imm } => func.0(cpu, reg, imm),
-            Instr::AlMoffs8 {
+            Instr::Moffs8 {
                 func,
                 segment,
                 offset,
             } => func.0(cpu, segment, offset),
             Instr::Rm16R16 { func, rm, reg } => func.0(cpu, rm, reg),
+            Instr::Imm8 { func, imm } => func.0(cpu, imm),
+            Instr::Rm8R8 { func, rm, reg } => func.0(cpu, rm, reg),
         }
     }
 }

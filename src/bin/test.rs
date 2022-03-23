@@ -5,7 +5,7 @@ use firn::{mem, System};
 
 fn main() {
     let mem = BasicMem::new(640 * 1024);
-    let eeprom = Eeprom::new(mem::DEFAULT_BIOS);
+    let eeprom = Eeprom::new_with_size(256 * 1024, mem::DEFAULT_BIOS);
 
     let mut map = MemMap::new(1024 * 1024);
     map.map(MemRange::from_memory_full(&mem), mem);

@@ -110,16 +110,6 @@ pub struct Modrm {
     pub reg_mem: RegMem,
 }
 
-// TODO: Separate everything else into functions like this
-pub fn decode_byte_reg(modrm: u8) -> GeneralByteReg {
-    let r = (modrm / 0o10) % 0o10;
-
-    match GeneralByteReg::from_u8(r) {
-        Some(reg) => reg,
-        None => panic!("invalid r (in xrm octal) in ModRM byte: {}", r),
-    }
-}
-
 impl Modrm {
     pub fn decode(cpu: &mut Cpu, modrm: u8, reg_type: Option<ModrmRegType>, rm_size: Size) -> Self {
         let x = (modrm / 0o100) % 0o10;
@@ -127,27 +117,25 @@ impl Modrm {
         let m = modrm % 0o10;
 
         let reg = reg_type.map(|reg_type| match reg_type {
-            ModrmRegType::ByteSized => decode_byte_reg(modrm).into(),
-            ModrmRegType::WordSized => match GeneralWordReg::from_u8(r) {
-                Some(reg) => reg.into(),
-                None => panic!("invalid r (in xrm octal) in ModRM byte: {}", r),
-            },
-            ModrmRegType::Segment => match SegmentReg::from_u8(r) {
-                Some(reg) => reg.into(),
-                None => panic!("invalid s (in xsm octal) in ModRM byte: {}", r),
-            },
+            ModrmRegType::ByteSized => GeneralByteReg::from_u8(r)
+                .unwrap_or_else(|| panic!("invalid r (in xrm octal) in ModRM byte: {}", r))
+                .into(),
+            ModrmRegType::WordSized => GeneralWordReg::from_u8(r)
+                .unwrap_or_else(|| panic!("invalid r (in xrm octal) in ModRM byte: {}", r))
+                .into(),
+            ModrmRegType::Segment => SegmentReg::from_u8(r)
+                .unwrap_or_else(|| panic!("invalid s (in xsm octal) in ModRM byte: {}", r))
+                .into(),
         });
 
         if x == 3 {
             let rm_reg = match rm_size {
-                Size::Byte => match GeneralByteReg::from_u8(m) {
-                    Some(reg) => reg.into(),
-                    None => panic!("invalid m (in 3rm octal) in ModRM byte: {}", m),
-                },
-                Size::Word => match GeneralWordReg::from_u8(m) {
-                    Some(reg) => reg.into(),
-                    None => panic!("invalid m (in 3rm octal) in ModRM byte: {}", m),
-                },
+                Size::Byte => GeneralByteReg::from_u8(m)
+                    .unwrap_or_else(|| panic!("invalid m (in 3rm octal) in ModRM byte: {}", m))
+                    .into(),
+                Size::Word => GeneralWordReg::from_u8(m)
+                    .unwrap_or_else(|| panic!("invalid m (in 3rm octal) in ModRM byte: {}", m))
+                    .into(),
             };
 
             return Modrm {
@@ -190,7 +178,13 @@ impl Modrm {
         }
     }
 
-    // TODO: Methods like this for everything else
+    pub fn byte_reg(&self) -> GeneralByteReg {
+        match self.reg {
+            Some(Reg::Byte(reg)) => reg,
+            _ => panic!("cannot get a byte-sized register from a non-byte-sized ModRM"),
+        }
+    }
+
     pub fn word_reg(&self) -> GeneralWordReg {
         match self.reg {
             Some(Reg::Word(WordReg::General(reg))) => reg,
