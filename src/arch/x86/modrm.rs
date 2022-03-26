@@ -191,4 +191,11 @@ impl Modrm {
             _ => panic!("cannot get a word-sized register from a non-word-sized ModRM"),
         }
     }
+
+    pub fn segment_reg(&self) -> SegmentReg {
+        match self.reg {
+            Some(Reg::Word(WordReg::Segment(reg))) => reg,
+            _ => panic!("cannot get a segment register from a non-segment ModRM"),
+        }
+    }
 }

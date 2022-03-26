@@ -14,6 +14,7 @@ pub const YEAR_REG: usize = 0x09;
 pub const STATUS_REG_A: usize = 0x0a;
 pub const STATUS_REG_B: usize = 0x0b;
 
+// TODO: Fully honor STATUS_REG_A and STATUS_REG_B values
 pub struct Cmos {
     selected_reg: u8,
     regs: [u8; 128],
@@ -96,7 +97,7 @@ impl Device for Cmos {
                 let _nmi_disable = *value >> 7;
                 self.selected_reg = *value & !0x80;
 
-                println!("Selected CMOS register: {:#x}", self.selected_reg);
+                println!("Using CMOS register: {:#x}", self.selected_reg);
             }
             (0x71, IoInstr::In8(value)) => {
                 **value = self.regs[self.selected_reg as usize];

@@ -47,6 +47,26 @@ pub enum Instr {
         rm: RegMem,
         reg: GeneralByteReg,
     },
+    R16Imm16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, imm: u16)>,
+        reg: GeneralWordReg,
+        imm: u16,
+    },
+    SregRm16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, reg: SegmentReg, rm: RegMem)>,
+        reg: SegmentReg,
+        rm: RegMem,
+    },
+    Rm8Imm8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, imm: u8)>,
+        rm: RegMem,
+        imm: u8,
+    },
+    R16Rm16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, rm: RegMem)>,
+        reg: GeneralWordReg,
+        rm: RegMem,
+    },
 }
 
 impl Instr {
@@ -71,6 +91,10 @@ impl Instr {
             Instr::Rm16R16 { func, rm, reg } => func.0(cpu, rm, reg),
             Instr::Imm8 { func, imm } => func.0(cpu, imm),
             Instr::Rm8R8 { func, rm, reg } => func.0(cpu, rm, reg),
+            Instr::R16Imm16 { func, reg, imm } => func.0(cpu, reg, imm),
+            Instr::SregRm16 { func, reg, rm } => func.0(cpu, reg, rm),
+            Instr::Rm8Imm8 { func, rm, imm } => func.0(cpu, rm, imm),
+            Instr::R16Rm16 { func, reg, rm } => func.0(cpu, reg, rm),
         }
     }
 }
