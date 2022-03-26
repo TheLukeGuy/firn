@@ -1,5 +1,7 @@
 use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::arch::x86::{Device, GeneralByteReg, Instr, Port, PortMatchResult, SegmentReg, WordReg};
+use crate::arch::x86::{
+    Device, GeneralByteReg, Instr, IoInstr, PortMatchResult, SegmentReg, WordReg,
+};
 use crate::{cpu, System};
 use std::io;
 use std::io::Write;
@@ -143,14 +145,14 @@ impl Cpu {
         self.devices.push(Box::new(device));
     }
 
-    pub fn match_port(&mut self, port: Port) {
+    pub fn match_port(&mut self, port: u16, instr: &mut IoInstr) {
         for device in &mut self.devices {
-            if let PortMatchResult::Matched = device.match_port(port) {
+            if let PortMatchResult::Matched = device.match_port(port, instr) {
                 return;
             }
         }
 
-        println!("Unhandled port: {:?}", port);
+        println!("Unhandled port: {:#x}", port);
     }
 
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
@@ -161,6 +163,12 @@ impl Cpu {
 }
 
 impl cpu::Cpu for Cpu {
+    fn init(&mut self) {
+        for device in &mut self.devices {
+            device.init();
+        }
+    }
+
     fn reset(&mut self) {
         self.set_reg_16(Cs.into(), 0xffff);
         self.set_reg_16(Ds.into(), 0x0000);
@@ -171,6 +179,10 @@ impl cpu::Cpu for Cpu {
     }
 
     fn step(&mut self) {
+        for device in &mut self.devices {
+            device.step();
+        }
+
         print!("({:#x}) ", self.linear_mem(Cs, self.ip));
         io::stdout().flush().unwrap();
 

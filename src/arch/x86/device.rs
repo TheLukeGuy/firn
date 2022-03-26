@@ -2,13 +2,13 @@ pub mod cmos;
 
 pub use cmos::Cmos;
 
-#[derive(Debug, Copy, Clone)]
-pub enum Port<'a> {
-    In8 { port: u16, value: &'a u8 },
-    Out8 { port: u16, value: u8 },
+#[derive(Debug)]
+pub enum IoInstr<'a> {
+    In8(&'a mut u8),
+    Out8(u8),
 
-    In16 { port: u16, value: &'a u16 },
-    Out16 { port: u16, value: u16 },
+    In16(&'a mut u16),
+    Out16(u16),
 }
 
 pub enum PortMatchResult {
@@ -17,5 +17,8 @@ pub enum PortMatchResult {
 }
 
 pub trait Device {
-    fn match_port(&mut self, port: Port) -> PortMatchResult;
+    fn match_port(&mut self, port: u16, instr: &mut IoInstr) -> PortMatchResult;
+
+    fn init(&mut self) {}
+    fn step(&mut self) {}
 }

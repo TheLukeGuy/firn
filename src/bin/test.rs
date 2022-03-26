@@ -1,3 +1,4 @@
+use chrono::Utc;
 use firn::arch::x86;
 use firn::arch::x86::device::Cmos;
 use firn::cpu::Cpu;
@@ -17,7 +18,7 @@ fn main() {
     let system = System::new(map);
     let mut cpu = x86::Cpu::new(system);
 
-    let cmos = Cmos::new();
+    let cmos = Cmos::new(Utc::now());
     cpu.add_device(cmos);
 
     cpu.run();

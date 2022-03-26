@@ -13,8 +13,8 @@ pub enum GeneralByteReg {
 }
 
 impl GeneralByteReg {
-    pub fn from_u8(n: u8) -> Option<Self> {
-        num_traits::FromPrimitive::from_u8(n)
+    pub fn from_u8(reg: u8) -> Option<Self> {
+        num_traits::FromPrimitive::from_u8(reg)
     }
 }
 
@@ -31,8 +31,8 @@ pub enum GeneralWordReg {
 }
 
 impl GeneralWordReg {
-    pub fn from_u8(n: u8) -> Option<Self> {
-        num_traits::FromPrimitive::from_u8(n)
+    pub fn from_u8(reg: u8) -> Option<Self> {
+        num_traits::FromPrimitive::from_u8(reg)
     }
 }
 
@@ -45,8 +45,8 @@ pub enum SegmentReg {
 }
 
 impl SegmentReg {
-    pub fn from_u8(n: u8) -> Option<Self> {
-        num_traits::FromPrimitive::from_u8(n)
+    pub fn from_u8(reg: u8) -> Option<Self> {
+        num_traits::FromPrimitive::from_u8(reg)
     }
 }
 
