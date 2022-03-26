@@ -1,6 +1,5 @@
 use crate::mem;
-use crate::mem::{Mem, MemDump, MemRange};
-use crate::num::Radix;
+use crate::mem::{DumpRadix, Mem, MemDump, MemRange};
 use linked_hash_map::LinkedHashMap;
 use std::fs;
 use std::ops::{Index, IndexMut};
@@ -50,7 +49,7 @@ impl MemMap {
 }
 
 impl MemDump for MemMap {
-    fn dump_to_str(&self, radix: Radix) -> String {
+    fn dump_to_str(&self, radix: DumpRadix) -> String {
         mem::format_str_dump(radix, (0..self.addressable).map(|index| self[index]))
     }
 

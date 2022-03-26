@@ -1,6 +1,5 @@
 use crate::mem;
-use crate::mem::{Mem, MemDump};
-use crate::num::Radix;
+use crate::mem::{DumpRadix, Mem, MemDump};
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::{fs, io};
@@ -25,7 +24,7 @@ impl Mem for BasicMem {
 }
 
 impl MemDump for BasicMem {
-    fn dump_to_str(&self, radix: Radix) -> String {
+    fn dump_to_str(&self, radix: DumpRadix) -> String {
         mem::format_str_dump(radix, (*self).iter().copied())
     }
 
