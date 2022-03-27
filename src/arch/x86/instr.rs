@@ -2,12 +2,22 @@ use crate::arch::x86::{
     opcodes, Cpu, GeneralByteReg, GeneralWordReg, Modrm, ModrmRegType, RegMem, SegmentReg, Size,
 };
 use std::fmt::{Debug, Formatter};
+use std::ops::Range;
 
 pub mod arith;
 pub mod control;
 pub mod flags;
 pub mod ports;
+pub mod strings;
 pub mod transfer;
+
+pub fn rep_16(rep: bool, times: impl Fn() -> u16) -> Range<u16> {
+    if rep {
+        0..times()
+    } else {
+        0..1
+    }
+}
 
 pub struct InstrFunc<F>(pub F);
 
@@ -20,6 +30,10 @@ impl<F> Debug for InstrFunc<F> {
 #[derive(Debug)]
 pub enum Instr {
     Basic(InstrFunc<fn(cpu: &mut Cpu)>),
+    BasicRep {
+        func: InstrFunc<fn(cpu: &mut Cpu, rep: bool)>,
+        rep: bool,
+    },
     Ptr16_16 {
         func: InstrFunc<fn(cpu: &mut Cpu, offset: u16, segment: u16)>,
         offset: u16,
@@ -64,6 +78,11 @@ pub enum Instr {
         reg: GeneralWordReg,
         rm: RegMem,
     },
+    Imm16Imm8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, first: u16, second: u8)>,
+        first: u16,
+        second: u8,
+    },
 }
 
 impl Instr {
@@ -73,6 +92,13 @@ impl Instr {
 
     pub fn new_basic(func: fn(cpu: &mut Cpu)) -> Self {
         Instr::Basic(InstrFunc(func))
+    }
+
+    pub fn new_basic_rep(func: fn(cpu: &mut Cpu, rep: bool), rep: bool) -> Self {
+        Instr::BasicRep {
+            func: InstrFunc(func),
+            rep,
+        }
     }
 
     pub fn new_ptr16_16(func: fn(cpu: &mut Cpu, offset: u16, segment: u16), cpu: &mut Cpu) -> Self {
@@ -171,9 +197,18 @@ impl Instr {
         }
     }
 
+    pub fn new_imm16_imm8(func: fn(cpu: &mut Cpu, first: u16, second: u8), cpu: &mut Cpu) -> Self {
+        Instr::Imm16Imm8 {
+            func: InstrFunc(func),
+            first: cpu.read_mem_16(),
+            second: cpu.read_mem_8(),
+        }
+    }
+
     pub fn execute(self, cpu: &mut Cpu) {
         match self {
             Instr::Basic(func) => func.0(cpu),
+            Instr::BasicRep { func, rep } => func.0(cpu, rep),
             Instr::Ptr16_16 {
                 func,
                 offset,
@@ -191,6 +226,11 @@ impl Instr {
             Instr::SregRm16 { func, reg, rm } => func.0(cpu, reg, rm),
             Instr::Rm8Imm8 { func, rm, imm } => func.0(cpu, rm, imm),
             Instr::R16Rm16 { func, reg, rm } => func.0(cpu, reg, rm),
+            Instr::Imm16Imm8 {
+                func,
+                first,
+                second,
+            } => func.0(cpu, first, second),
         }
     }
 

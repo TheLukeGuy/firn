@@ -1,3 +1,4 @@
+use crate::arch::x86::GeneralWordReg::Sp;
 use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
 use crate::arch::x86::{
     Device, Flags, GeneralByteReg, Instr, IoInstr, PortMatchResult, SegmentReg, WordReg,
@@ -65,6 +66,26 @@ impl Cpu {
         };
     }
 
+    pub fn inc_reg_8(&mut self, reg: GeneralByteReg, amount: u8) {
+        let old = self.get_reg_8(reg);
+        self.set_reg_8(reg, old.wrapping_add(amount));
+    }
+
+    pub fn inc_reg_16(&mut self, reg: WordReg, amount: u16) {
+        let old = self.get_reg_16(reg);
+        self.set_reg_16(reg, old.wrapping_add(amount));
+    }
+
+    pub fn dec_reg_8(&mut self, reg: GeneralByteReg, amount: u8) {
+        let old = self.get_reg_8(reg);
+        self.set_reg_8(reg, old.wrapping_sub(amount));
+    }
+
+    pub fn dec_reg_16(&mut self, reg: WordReg, amount: u16) {
+        let old = self.get_reg_16(reg);
+        self.set_reg_16(reg, old.wrapping_sub(amount));
+    }
+
     pub fn get_mem_8(&self, segment: SegmentReg, offset: u16) -> u8 {
         let linear = self.linear_mem(segment, offset);
 
@@ -105,6 +126,21 @@ impl Cpu {
         self.ip += 2;
 
         value
+    }
+
+    // TODO: push_8, maybe?
+
+    pub fn push_16(&mut self, value: u16) {
+        let sp = self.get_reg_16(Sp.into()) - 2;
+        self.set_reg_16(Sp.into(), sp);
+        self.set_mem_16(Ss, sp, value);
+    }
+
+    // TODO: push_reg_8, maybe?
+
+    pub fn push_reg_16(&mut self, reg: WordReg) {
+        let value = self.get_reg_16(reg);
+        self.push_16(value);
     }
 
     pub fn add_device(&mut self, device: impl Device + 'static) {
