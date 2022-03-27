@@ -10,7 +10,7 @@ pub fn mov_al_moffs8(cpu: &mut Cpu, segment: SegmentReg, offset: u16) {
     cpu.set_reg_8(Al, value);
 }
 
-pub fn mov_rm8_r8(cpu: &mut Cpu, rm: RegMem, reg: GeneralByteReg) {
+pub fn mov_rm8_r8(cpu: &mut Cpu, reg: GeneralByteReg, rm: RegMem) {
     let value = cpu.get_reg_8(reg);
     rm.set_8(cpu, value);
 }
@@ -19,7 +19,7 @@ pub fn mov_r16_imm16(cpu: &mut Cpu, reg: GeneralWordReg, imm: u16) {
     cpu.set_reg_16(reg.into(), imm);
 }
 
-pub fn mov_rm16_r16(cpu: &mut Cpu, rm: RegMem, reg: GeneralWordReg) {
+pub fn mov_rm16_r16(cpu: &mut Cpu, reg: GeneralWordReg, rm: RegMem) {
     let value = cpu.get_reg_16(reg.into());
     rm.set_16(cpu, value);
 }

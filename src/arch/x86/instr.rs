@@ -1,4 +1,6 @@
-use crate::arch::x86::{opcodes, Cpu, GeneralByteReg, GeneralWordReg, RegMem, SegmentReg};
+use crate::arch::x86::{
+    opcodes, Cpu, GeneralByteReg, GeneralWordReg, Modrm, ModrmRegType, RegMem, SegmentReg, Size,
+};
 use std::fmt::{Debug, Formatter};
 
 pub mod arith;
@@ -33,19 +35,14 @@ pub enum Instr {
         segment: SegmentReg,
         offset: u16,
     },
-    Rm16R16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, reg: GeneralWordReg)>,
-        rm: RegMem,
-        reg: GeneralWordReg,
-    },
     Imm8 {
         func: InstrFunc<fn(cpu: &mut Cpu, imm: u8)>,
         imm: u8,
     },
-    Rm8R8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, reg: GeneralByteReg)>,
-        rm: RegMem,
+    R8Rm8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralByteReg, rm: RegMem)>,
         reg: GeneralByteReg,
+        rm: RegMem,
     },
     R16Imm16 {
         func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, imm: u16)>,
@@ -74,6 +71,106 @@ impl Instr {
         opcodes::decode(cpu)
     }
 
+    pub fn new_basic(func: fn(cpu: &mut Cpu)) -> Self {
+        Instr::Basic(InstrFunc(func))
+    }
+
+    pub fn new_ptr16_16(func: fn(cpu: &mut Cpu, offset: u16, segment: u16), cpu: &mut Cpu) -> Self {
+        Instr::Ptr16_16 {
+            func: InstrFunc(func),
+            offset: cpu.read_mem_16(),
+            segment: cpu.read_mem_16(),
+        }
+    }
+
+    pub fn new_r8_imm8(
+        func: fn(cpu: &mut Cpu, reg: GeneralByteReg, imm: u8),
+        cpu: &mut Cpu,
+        reg: GeneralByteReg,
+    ) -> Self {
+        Instr::R8Imm8 {
+            func: InstrFunc(func),
+            reg,
+            imm: cpu.read_mem_8(),
+        }
+    }
+
+    pub fn new_moffs8(
+        func: fn(cpu: &mut Cpu, segment: SegmentReg, offset: u16),
+        cpu: &mut Cpu,
+        segment: SegmentReg,
+    ) -> Self {
+        Instr::Moffs8 {
+            func: InstrFunc(func),
+            segment,
+            offset: cpu.read_mem_16(),
+        }
+    }
+
+    pub fn new_imm8(func: fn(cpu: &mut Cpu, imm: u8), cpu: &mut Cpu) -> Self {
+        Instr::Imm8 {
+            func: InstrFunc(func),
+            imm: cpu.read_mem_8(),
+        }
+    }
+
+    pub fn new_r8_rm8(
+        func: fn(cpu: &mut Cpu, reg: GeneralByteReg, rm: RegMem),
+        cpu: &mut Cpu,
+    ) -> Self {
+        let modrm = Self::modrm_all_8(cpu);
+        Instr::R8Rm8 {
+            func: InstrFunc(func),
+            reg: modrm.byte_reg(),
+            rm: modrm.reg_mem,
+        }
+    }
+
+    pub fn new_r16_imm16(
+        func: fn(cpu: &mut Cpu, reg: GeneralWordReg, imm: u16),
+        cpu: &mut Cpu,
+        reg: GeneralWordReg,
+    ) -> Self {
+        Instr::R16Imm16 {
+            func: InstrFunc(func),
+            reg,
+            imm: cpu.read_mem_16(),
+        }
+    }
+
+    pub fn new_sreg_rm16(
+        func: fn(cpu: &mut Cpu, reg: SegmentReg, rm: RegMem),
+        cpu: &mut Cpu,
+    ) -> Self {
+        let modrm = Self::modrm_segment_16(cpu);
+        Instr::SregRm16 {
+            func: InstrFunc(func),
+            reg: modrm.segment_reg(),
+            rm: modrm.reg_mem,
+        }
+    }
+
+    pub fn new_rm8_imm8(func: fn(cpu: &mut Cpu, rm: RegMem, imm: u8), cpu: &mut Cpu) -> Self {
+        let modrm = Self::modrm_all_8(cpu);
+        Instr::Rm8Imm8 {
+            func: InstrFunc(func),
+            rm: modrm.reg_mem,
+            imm: cpu.read_mem_8(),
+        }
+    }
+
+    pub fn new_r16_rm16(
+        func: fn(cpu: &mut Cpu, reg: GeneralWordReg, rm: RegMem),
+        cpu: &mut Cpu,
+    ) -> Self {
+        let modrm = Self::modrm_all_16(cpu);
+        Instr::R16Rm16 {
+            func: InstrFunc(func),
+            reg: modrm.word_reg(),
+            rm: modrm.reg_mem,
+        }
+    }
+
     pub fn execute(self, cpu: &mut Cpu) {
         match self {
             Instr::Basic(func) => func.0(cpu),
@@ -88,13 +185,27 @@ impl Instr {
                 segment,
                 offset,
             } => func.0(cpu, segment, offset),
-            Instr::Rm16R16 { func, rm, reg } => func.0(cpu, rm, reg),
             Instr::Imm8 { func, imm } => func.0(cpu, imm),
-            Instr::Rm8R8 { func, rm, reg } => func.0(cpu, rm, reg),
+            Instr::R8Rm8 { func, reg, rm } => func.0(cpu, reg, rm),
             Instr::R16Imm16 { func, reg, imm } => func.0(cpu, reg, imm),
             Instr::SregRm16 { func, reg, rm } => func.0(cpu, reg, rm),
             Instr::Rm8Imm8 { func, rm, imm } => func.0(cpu, rm, imm),
             Instr::R16Rm16 { func, reg, rm } => func.0(cpu, reg, rm),
         }
+    }
+
+    fn modrm_all_8(cpu: &mut Cpu) -> Modrm {
+        let modrm = cpu.read_mem_8();
+        Modrm::decode(cpu, modrm, Some(ModrmRegType::ByteSized), Size::Byte)
+    }
+
+    fn modrm_all_16(cpu: &mut Cpu) -> Modrm {
+        let modrm = cpu.read_mem_8();
+        Modrm::decode(cpu, modrm, Some(ModrmRegType::WordSized), Size::Word)
+    }
+
+    fn modrm_segment_16(cpu: &mut Cpu) -> Modrm {
+        let modrm = cpu.read_mem_8();
+        Modrm::decode(cpu, modrm, Some(ModrmRegType::Segment), Size::Word)
     }
 }
