@@ -26,11 +26,11 @@ pub struct RmPtr {
 }
 
 impl RmPtr {
-    pub fn to_linear(&self, cpu: &Cpu) -> (SegmentReg, u16) {
+    pub fn address(&self, cpu: &Cpu) -> (SegmentReg, u16) {
         let mut offset: u16 = 0;
 
         for reg in [self.first_reg, self.second_reg].into_iter().flatten() {
-            let value = cpu.get_reg_16(reg.into());
+            let value = cpu.reg_16(reg.into());
             offset = offset.wrapping_add(value);
         }
 
@@ -54,12 +54,12 @@ impl RegMem {
     pub fn get_8(&self, cpu: &Cpu) -> u8 {
         match self {
             RegMem::Reg(reg) => match reg {
-                GeneralReg::Byte(reg) => cpu.get_reg_8(*reg),
+                GeneralReg::Byte(reg) => cpu.reg_8(*reg),
                 _ => panic!("cannot get a byte-sized value from a non-byte-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.to_linear(cpu);
-                cpu.get_mem_8(segment, offset)
+                let (segment, offset) = ptr.address(cpu);
+                cpu.mem_8(segment, offset)
             }
         }
     }
@@ -67,12 +67,12 @@ impl RegMem {
     pub fn get_16(&self, cpu: &Cpu) -> u16 {
         match self {
             RegMem::Reg(reg) => match reg {
-                GeneralReg::Word(reg) => cpu.get_reg_16((*reg).into()),
+                GeneralReg::Word(reg) => cpu.reg_16((*reg).into()),
                 _ => panic!("cannot get a word-sized value from a non-word-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.to_linear(cpu);
-                cpu.get_mem_16(segment, offset)
+                let (segment, offset) = ptr.address(cpu);
+                cpu.mem_16(segment, offset)
             }
         }
     }
@@ -84,7 +84,7 @@ impl RegMem {
                 _ => panic!("cannot set a byte-sized value to a non-byte-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.to_linear(cpu);
+                let (segment, offset) = ptr.address(cpu);
                 cpu.set_mem_8(segment, offset, value);
             }
         }
@@ -97,7 +97,7 @@ impl RegMem {
                 _ => panic!("cannot set a word-sized value to a non-word-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.to_linear(cpu);
+                let (segment, offset) = ptr.address(cpu);
                 cpu.set_mem_16(segment, offset, value);
             }
         }

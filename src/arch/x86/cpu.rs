@@ -34,11 +34,11 @@ impl Cpu {
         }
     }
 
-    pub fn get_reg_8(&self, reg: GeneralByteReg) -> u8 {
+    pub fn reg_8(&self, reg: GeneralByteReg) -> u8 {
         self.regs[reg as usize]
     }
 
-    pub fn get_reg_16(&self, reg: WordReg) -> u16 {
+    pub fn reg_16(&self, reg: WordReg) -> u16 {
         match reg {
             WordReg::General(reg) => {
                 let low = self.regs[reg as usize];
@@ -67,32 +67,32 @@ impl Cpu {
     }
 
     pub fn inc_reg_8(&mut self, reg: GeneralByteReg, amount: u8) {
-        let old = self.get_reg_8(reg);
+        let old = self.reg_8(reg);
         self.set_reg_8(reg, old.wrapping_add(amount));
     }
 
     pub fn inc_reg_16(&mut self, reg: WordReg, amount: u16) {
-        let old = self.get_reg_16(reg);
+        let old = self.reg_16(reg);
         self.set_reg_16(reg, old.wrapping_add(amount));
     }
 
     pub fn dec_reg_8(&mut self, reg: GeneralByteReg, amount: u8) {
-        let old = self.get_reg_8(reg);
+        let old = self.reg_8(reg);
         self.set_reg_8(reg, old.wrapping_sub(amount));
     }
 
     pub fn dec_reg_16(&mut self, reg: WordReg, amount: u16) {
-        let old = self.get_reg_16(reg);
+        let old = self.reg_16(reg);
         self.set_reg_16(reg, old.wrapping_sub(amount));
     }
 
-    pub fn get_mem_8(&self, segment: SegmentReg, offset: u16) -> u8 {
+    pub fn mem_8(&self, segment: SegmentReg, offset: u16) -> u8 {
         let linear = self.linear_mem(segment, offset);
 
         self.system.mem[linear]
     }
 
-    pub fn get_mem_16(&self, segment: SegmentReg, offset: u16) -> u16 {
+    pub fn mem_16(&self, segment: SegmentReg, offset: u16) -> u16 {
         let linear = self.linear_mem(segment, offset);
 
         let low = self.system.mem[linear];
@@ -115,14 +115,14 @@ impl Cpu {
     }
 
     pub fn read_mem_8(&mut self) -> u8 {
-        let value = self.get_mem_8(Cs, self.ip);
+        let value = self.mem_8(Cs, self.ip);
         self.ip += 1;
 
         value
     }
 
     pub fn read_mem_16(&mut self) -> u16 {
-        let value = self.get_mem_16(Cs, self.ip);
+        let value = self.mem_16(Cs, self.ip);
         self.ip += 2;
 
         value
@@ -131,15 +131,25 @@ impl Cpu {
     // TODO: push_8, maybe?
 
     pub fn push_16(&mut self, value: u16) {
-        let sp = self.get_reg_16(Sp.into()) - 2;
+        let sp = self.reg_16(Sp.into()) - 2;
         self.set_reg_16(Sp.into(), sp);
         self.set_mem_16(Ss, sp, value);
+    }
+
+    // TODO: pop_8, maybe?
+
+    pub fn pop_16(&mut self) -> u16 {
+        let sp = self.reg_16(Sp.into());
+        let value = self.mem_16(Ss, sp);
+        self.inc_reg_16(Sp.into(), 2);
+
+        value
     }
 
     // TODO: push_reg_8, maybe?
 
     pub fn push_reg_16(&mut self, reg: WordReg) {
-        let value = self.get_reg_16(reg);
+        let value = self.reg_16(reg);
         self.push_16(value);
     }
 
@@ -158,7 +168,7 @@ impl Cpu {
     }
 
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
-        let segment = self.get_reg_16(segment.into()) as usize;
+        let segment = self.reg_16(segment.into()) as usize;
 
         (segment << 4) + offset as usize
     }

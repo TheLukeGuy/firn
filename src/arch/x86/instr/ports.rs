@@ -2,7 +2,7 @@ use crate::arch::x86::GeneralByteReg::Al;
 use crate::arch::x86::{Cpu, IoInstr};
 
 pub fn out_imm8_al(cpu: &mut Cpu, imm: u8) {
-    let value = cpu.get_reg_8(Al);
+    let value = cpu.reg_8(Al);
     let mut instr = IoInstr::Out8(value);
     cpu.match_port(imm as u16, &mut instr);
 }

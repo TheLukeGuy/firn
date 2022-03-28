@@ -1,5 +1,7 @@
+use crate::arch::x86::GeneralWordReg::Cx;
 use crate::arch::x86::{
-    opcodes, Cpu, GeneralByteReg, GeneralWordReg, Modrm, ModrmRegType, RegMem, SegmentReg, Size,
+    opcodes, Cpu, GeneralByteReg, GeneralWordReg, Modrm, ModrmRegType, RegMem, RmPtr, SegmentReg,
+    Size,
 };
 use std::fmt::{Debug, Formatter};
 use std::ops::Range;
@@ -8,12 +10,13 @@ pub mod arith;
 pub mod control;
 pub mod flags;
 pub mod ports;
+pub mod stack;
 pub mod strings;
 pub mod transfer;
 
-pub fn rep_16(rep: bool, times: impl Fn() -> u16) -> Range<u16> {
+pub fn rep(cpu: &Cpu, rep: bool) -> Range<u16> {
     if rep {
-        0..times()
+        0..cpu.reg_16(Cx.into())
     } else {
         0..1
     }
@@ -82,6 +85,24 @@ pub enum Instr {
         func: InstrFunc<fn(cpu: &mut Cpu, first: u16, second: u8)>,
         first: u16,
         second: u8,
+    },
+    Imm16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, imm: u16)>,
+        imm: u16,
+    },
+    R16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg)>,
+        reg: GeneralWordReg,
+    },
+    Rm16Imm8 {
+        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, imm: u8)>,
+        rm: RegMem,
+        imm: u8,
+    },
+    R16M16 {
+        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, mem: RmPtr)>,
+        reg: GeneralWordReg,
+        mem: RmPtr,
     },
 }
 
@@ -205,6 +226,46 @@ impl Instr {
         }
     }
 
+    pub fn new_imm16(func: fn(cpu: &mut Cpu, imm: u16), cpu: &mut Cpu) -> Self {
+        Instr::Imm16 {
+            func: InstrFunc(func),
+            imm: cpu.read_mem_16(),
+        }
+    }
+
+    pub fn new_r16(func: fn(cpu: &mut Cpu, reg: GeneralWordReg), reg: GeneralWordReg) -> Self {
+        Instr::R16 {
+            func: InstrFunc(func),
+            reg,
+        }
+    }
+
+    pub fn new_rm16_imm8(func: fn(cpu: &mut Cpu, rm: RegMem, imm: u8), cpu: &mut Cpu) -> Self {
+        let modrm = Self::modrm_all_16(cpu);
+        Instr::Rm16Imm8 {
+            func: InstrFunc(func),
+            rm: modrm.reg_mem,
+            imm: cpu.read_mem_8(),
+        }
+    }
+
+    pub fn new_r16_m16(
+        func: fn(cpu: &mut Cpu, reg: GeneralWordReg, mem: RmPtr),
+        cpu: &mut Cpu,
+    ) -> Self {
+        let modrm = Self::modrm_all_16(cpu);
+        let mem = match modrm.reg_mem {
+            RegMem::Ptr(ptr) => ptr,
+            RegMem::Reg(_) => panic!("expected memory pointer in ModRM byte"),
+        };
+
+        Instr::R16M16 {
+            func: InstrFunc(func),
+            reg: modrm.word_reg(),
+            mem,
+        }
+    }
+
     pub fn execute(self, cpu: &mut Cpu) {
         match self {
             Instr::Basic(func) => func.0(cpu),
@@ -231,6 +292,10 @@ impl Instr {
                 first,
                 second,
             } => func.0(cpu, first, second),
+            Instr::Imm16 { func, imm } => func.0(cpu, imm),
+            Instr::R16 { func, reg } => func.0(cpu, reg),
+            Instr::Rm16Imm8 { func, rm, imm } => func.0(cpu, rm, imm),
+            Instr::R16M16 { func, reg, mem } => func.0(cpu, reg, mem),
         }
     }
 
