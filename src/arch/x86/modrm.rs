@@ -40,7 +40,7 @@ impl RmPtr {
             None => 0,
         };
 
-        (self.segment, offset + displacement)
+        (self.segment, offset.wrapping_add(displacement))
     }
 }
 
