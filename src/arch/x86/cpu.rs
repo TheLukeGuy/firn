@@ -128,7 +128,11 @@ impl Cpu {
         value
     }
 
-    // TODO: push_8, maybe?
+    pub fn push_8(&mut self, value: u8) {
+        let sp = self.reg_16(Sp.into()) - 1;
+        self.set_reg_16(Sp.into(), sp);
+        self.set_mem_8(Ss, sp, value);
+    }
 
     pub fn push_16(&mut self, value: u16) {
         let sp = self.reg_16(Sp.into()) - 2;
@@ -136,7 +140,13 @@ impl Cpu {
         self.set_mem_16(Ss, sp, value);
     }
 
-    // TODO: pop_8, maybe?
+    pub fn pop_8(&mut self) -> u8 {
+        let sp = self.reg_16(Sp.into());
+        let value = self.mem_8(Ss, sp);
+        self.inc_reg_16(Sp.into(), 1);
+
+        value
+    }
 
     pub fn pop_16(&mut self) -> u16 {
         let sp = self.reg_16(Sp.into());
@@ -146,7 +156,10 @@ impl Cpu {
         value
     }
 
-    // TODO: push_reg_8, maybe?
+    pub fn push_reg_8(&mut self, reg: GeneralByteReg) {
+        let value = self.reg_8(reg);
+        self.push_8(value);
+    }
 
     pub fn push_reg_16(&mut self, reg: WordReg) {
         let value = self.reg_16(reg);

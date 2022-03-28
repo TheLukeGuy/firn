@@ -47,11 +47,26 @@ pub fn add_rm8_r8(cpu: &mut Cpu, reg: GeneralByteReg, rm: RegMem) {
     rm.set_8(cpu, value);
 }
 
+pub fn cmp_ax_imm16(cpu: &mut Cpu, imm: u16) {
+    let old = cpu.reg_16(Ax.into());
+    cmp_16(cpu, old, imm);
+}
+
 fn cmp_8(cpu: &mut Cpu, left: u8, right: u8) {
     let (value, unsigned_overflow) = left.overflowing_sub(right);
     let (_, signed_overflow) = (left as i8).overflowing_sub(right as i8);
 
     cpu.flags.set_pzs_from_u8(value);
+    cpu.flags.carry = unsigned_overflow;
+    cpu.flags.overflow = signed_overflow;
+    // TODO: Set AF
+}
+
+fn cmp_16(cpu: &mut Cpu, left: u16, right: u16) {
+    let (value, unsigned_overflow) = left.overflowing_sub(right);
+    let (_, signed_overflow) = (left as i16).overflowing_sub(right as i16);
+
+    cpu.flags.set_pzs_from_u16(value);
     cpu.flags.carry = unsigned_overflow;
     cpu.flags.overflow = signed_overflow;
     // TODO: Set AF
