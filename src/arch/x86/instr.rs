@@ -30,80 +30,103 @@ impl<F> Debug for InstrFunc<F> {
     }
 }
 
-#[derive(Debug)]
-pub enum Instr {
-    Basic(InstrFunc<fn(cpu: &mut Cpu)>),
-    BasicRep {
-        func: InstrFunc<fn(cpu: &mut Cpu, rep: bool)>,
-        rep: bool,
-    },
-    Ptr16_16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, offset: u16, segment: u16)>,
-        offset: u16,
-        segment: u16,
-    },
-    R8Imm8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralByteReg, imm: u8)>,
-        reg: GeneralByteReg,
-        imm: u8,
-    },
-    Moffs8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, segment: SegmentReg, offset: u16)>,
-        segment: SegmentReg,
-        offset: u16,
-    },
-    Imm8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, imm: u8)>,
-        imm: u8,
-    },
-    R8Rm8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralByteReg, rm: RegMem)>,
-        reg: GeneralByteReg,
-        rm: RegMem,
-    },
-    R16Imm16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, imm: u16)>,
-        reg: GeneralWordReg,
-        imm: u16,
-    },
-    SregRm16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: SegmentReg, rm: RegMem)>,
-        reg: SegmentReg,
-        rm: RegMem,
-    },
-    Rm8Imm8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, imm: u8)>,
-        rm: RegMem,
-        imm: u8,
-    },
-    R16Rm16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, rm: RegMem)>,
-        reg: GeneralWordReg,
-        rm: RegMem,
-    },
-    Imm16Imm8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, first: u16, second: u8)>,
-        first: u16,
-        second: u8,
-    },
-    Imm16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, imm: u16)>,
-        imm: u16,
-    },
-    R16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg)>,
-        reg: GeneralWordReg,
-    },
-    Rm16Imm8 {
-        func: InstrFunc<fn(cpu: &mut Cpu, rm: RegMem, imm: u8)>,
-        rm: RegMem,
-        imm: u8,
-    },
-    R16M16 {
-        func: InstrFunc<fn(cpu: &mut Cpu, reg: GeneralWordReg, mem: RmPtr)>,
-        reg: GeneralWordReg,
-        mem: RmPtr,
-    },
+macro_rules! instr_enum {
+    (
+        $( #[$meta:meta] )*
+        $vis:vis enum $name:ident {
+            $(
+                $variant_name:ident $( {
+                    $( $value_name:ident : $value_type:ty ),* $(,)?
+                } )?
+            ),* $(,)?
+        }
+    ) => {
+        $( #[$meta] )*
+        $vis enum $name {
+            $(
+                $variant_name {
+                    func: InstrFunc<fn(cpu: &mut Cpu, $( $( $value_name: $value_type ),* )?)>,
+                    $( $( $value_name: $value_type ),* )?
+                }
+            ),*
+        }
+
+        impl $name {
+            pub fn execute(self, cpu: &mut Cpu) {
+                match self {
+                    $(
+                        $name::$variant_name {
+                            func,
+                            $( $( $value_name ),* )?
+                        } => func.0(cpu, $( $( $value_name ),* )?)
+                    ),*
+                }
+            }
+        }
+    }
+}
+
+instr_enum! {
+    #[derive(Debug)]
+    pub enum Instr {
+        Basic,
+        BasicRep {
+            rep: bool,
+        },
+        Ptr16_16 {
+            offset: u16,
+            segment: u16,
+        },
+        R8Imm8 {
+            reg: GeneralByteReg,
+            imm: u8,
+        },
+        Moffs8 {
+            segment: SegmentReg,
+            offset: u16,
+        },
+        Imm8 {
+            imm: u8,
+        },
+        R8Rm8 {
+            reg: GeneralByteReg,
+            rm: RegMem,
+        },
+        R16Imm16 {
+            reg: GeneralWordReg,
+            imm: u16,
+        },
+        SregRm16 {
+            reg: SegmentReg,
+            rm: RegMem,
+        },
+        Rm8Imm8 {
+            rm: RegMem,
+            imm: u8,
+        },
+        R16Rm16 {
+            reg: GeneralWordReg,
+            rm: RegMem,
+        },
+        Imm16Imm8 {
+            first: u16,
+            second: u8,
+        },
+        Imm16 {
+            imm: u16,
+        },
+        R16 {
+            reg: GeneralWordReg,
+        },
+        Rm16Imm8 {
+            rm: RegMem,
+            imm: u8,
+        },
+        R16M16 {
+            reg: GeneralWordReg,
+            mem: RmPtr,
+        },
+    }
 }
 
 impl Instr {
@@ -112,7 +135,9 @@ impl Instr {
     }
 
     pub fn new_basic(func: fn(cpu: &mut Cpu)) -> Self {
-        Instr::Basic(InstrFunc(func))
+        Instr::Basic {
+            func: InstrFunc(func),
+        }
     }
 
     pub fn new_basic_rep(func: fn(cpu: &mut Cpu, rep: bool), rep: bool) -> Self {
@@ -263,39 +288,6 @@ impl Instr {
             func: InstrFunc(func),
             reg: modrm.word_reg(),
             mem,
-        }
-    }
-
-    pub fn execute(self, cpu: &mut Cpu) {
-        match self {
-            Instr::Basic(func) => func.0(cpu),
-            Instr::BasicRep { func, rep } => func.0(cpu, rep),
-            Instr::Ptr16_16 {
-                func,
-                offset,
-                segment,
-            } => func.0(cpu, offset, segment),
-            Instr::R8Imm8 { func, reg, imm } => func.0(cpu, reg, imm),
-            Instr::Moffs8 {
-                func,
-                segment,
-                offset,
-            } => func.0(cpu, segment, offset),
-            Instr::Imm8 { func, imm } => func.0(cpu, imm),
-            Instr::R8Rm8 { func, reg, rm } => func.0(cpu, reg, rm),
-            Instr::R16Imm16 { func, reg, imm } => func.0(cpu, reg, imm),
-            Instr::SregRm16 { func, reg, rm } => func.0(cpu, reg, rm),
-            Instr::Rm8Imm8 { func, rm, imm } => func.0(cpu, rm, imm),
-            Instr::R16Rm16 { func, reg, rm } => func.0(cpu, reg, rm),
-            Instr::Imm16Imm8 {
-                func,
-                first,
-                second,
-            } => func.0(cpu, first, second),
-            Instr::Imm16 { func, imm } => func.0(cpu, imm),
-            Instr::R16 { func, reg } => func.0(cpu, reg),
-            Instr::Rm16Imm8 { func, rm, imm } => func.0(cpu, rm, imm),
-            Instr::R16M16 { func, reg, mem } => func.0(cpu, reg, mem),
         }
     }
 
