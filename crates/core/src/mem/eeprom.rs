@@ -3,8 +3,6 @@ use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::{fs, io};
 
-pub const DEFAULT_BIOS: &[u8] = include_bytes!("../../resources/default_bios.bin");
-
 pub struct Eeprom {
     memory: Vec<u8>,
 }

@@ -1,22 +1,21 @@
 use chrono::Utc;
-use firn::arch::x86;
-use firn::arch::x86::device::Cmos;
-use firn::cpu::Cpu;
-use firn::mem::{BasicMem, Eeprom, MemDump, MemMap, MemRange};
-use firn::{mem, System};
+use firn_core::cpu::Cpu;
+use firn_core::mem::{BasicMem, Eeprom, MemDump, MemMap, MemRange};
+use firn_core::System;
+use firn_x86::device::Cmos;
 
 fn main() {
     let mem = BasicMem::new(640 * 1024);
-    let eeprom = Eeprom::new_with_size(256 * 1024, mem::DEFAULT_BIOS);
+    let eeprom = Eeprom::new_with_size(256 * 1024, firn_x86::DEFAULT_BIOS);
 
     let mut map = MemMap::new(1024 * 1024);
     map.map(MemRange::from_memory_full(&mem), mem);
     map.map(MemRange::new(0xc0000, 0xfffff), eeprom);
-    map.dump_to_file("mem.bin")
+    map.dump_to_file("../../../mem.bin")
         .unwrap_or_else(|err| println!("Failed to dump memory: {}", err));
 
     let system = System::new(map);
-    let mut cpu = x86::Cpu::new(system);
+    let mut cpu = firn_x86::Cpu::new(system);
 
     let cmos = Cmos::new(Utc::now());
     cpu.add_device(cmos);

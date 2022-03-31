@@ -1,6 +1,6 @@
-use crate::arch::x86::GeneralByteReg::Al;
-use crate::arch::x86::GeneralWordReg::Dx;
-use crate::arch::x86::{Cpu, IoInstr};
+use crate::GeneralByteReg::Al;
+use crate::GeneralWordReg::Dx;
+use crate::{Cpu, IoInstr};
 
 pub fn out_imm8_al(cpu: &mut Cpu, imm: u8) {
     let value = cpu.reg_8(Al);

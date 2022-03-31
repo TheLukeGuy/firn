@@ -1,7 +1,7 @@
-use crate::arch::x86::GeneralByteReg::Al;
-use crate::arch::x86::GeneralWordReg::{Ax, Di, Si};
-use crate::arch::x86::SegmentReg::Es;
-use crate::arch::x86::{instr, Cpu};
+use crate::GeneralByteReg::Al;
+use crate::GeneralWordReg::{Ax, Di, Si};
+use crate::SegmentReg::Es;
+use crate::{instr, Cpu};
 
 pub fn stosw(cpu: &mut Cpu, rep: bool) {
     for offset in instr::rep(cpu, rep) {

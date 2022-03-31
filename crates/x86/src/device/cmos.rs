@@ -1,4 +1,4 @@
-use crate::arch::x86::{Device, IoInstr, PortMatchResult};
+use crate::{Device, IoInstr, PortMatchResult};
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use std::time;
 use std::time::{Duration, SystemTime};

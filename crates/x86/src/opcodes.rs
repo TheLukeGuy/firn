@@ -1,5 +1,5 @@
-use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::arch::x86::{instr, Cpu, GeneralByteReg, GeneralWordReg, Instr, SegmentReg};
+use crate::SegmentReg::{Cs, Ds, Es, Ss};
+use crate::{instr, Cpu, GeneralByteReg, GeneralWordReg, Instr, SegmentReg};
 use std::io;
 use std::io::Write;
 

@@ -1,8 +1,6 @@
-use crate::arch::x86::GeneralWordReg::{Bp, Bx, Di, Si};
-use crate::arch::x86::SegmentReg::{Ds, Ss};
-use crate::arch::x86::{
-    Cpu, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, WordReg,
-};
+use crate::GeneralWordReg::{Bp, Bx, Di, Si};
+use crate::SegmentReg::{Ds, Ss};
+use crate::{Cpu, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, WordReg};
 
 #[derive(Debug, Copy, Clone)]
 pub enum ModrmRegType {

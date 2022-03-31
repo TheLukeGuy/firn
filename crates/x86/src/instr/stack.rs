@@ -1,6 +1,6 @@
-use crate::arch::x86::GeneralWordReg::{Ax, Bp, Bx, Cx, Di, Dx, Si, Sp};
-use crate::arch::x86::SegmentReg::{Ds, Es};
-use crate::arch::x86::{Cpu, GeneralWordReg};
+use crate::GeneralWordReg::{Ax, Bp, Bx, Cx, Di, Dx, Si, Sp};
+use crate::SegmentReg::{Ds, Es};
+use crate::{Cpu, GeneralWordReg};
 
 pub fn push_r16(cpu: &mut Cpu, reg: GeneralWordReg) {
     cpu.push_reg_16(reg.into());

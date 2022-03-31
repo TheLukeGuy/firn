@@ -8,7 +8,7 @@ pub mod map;
 pub mod range;
 
 pub use basic::BasicMem;
-pub use eeprom::{Eeprom, DEFAULT_BIOS};
+pub use eeprom::Eeprom;
 pub use map::MemMap;
 pub use range::MemRange;
 

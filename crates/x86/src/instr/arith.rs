@@ -1,6 +1,6 @@
-use crate::arch::x86::GeneralByteReg::Al;
-use crate::arch::x86::GeneralWordReg::Ax;
-use crate::arch::x86::{Cpu, GeneralByteReg, GeneralWordReg, RegMem};
+use crate::GeneralByteReg::Al;
+use crate::GeneralWordReg::Ax;
+use crate::{Cpu, GeneralByteReg, GeneralWordReg, RegMem};
 
 pub fn xor_rm16_r16(cpu: &mut Cpu, reg: GeneralWordReg, rm: RegMem) {
     let old = rm.get_16(cpu);

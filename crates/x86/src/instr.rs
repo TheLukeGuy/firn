@@ -1,5 +1,5 @@
-use crate::arch::x86::GeneralWordReg::Cx;
-use crate::arch::x86::{
+use crate::GeneralWordReg::Cx;
+use crate::{
     opcodes, Cpu, GeneralByteReg, GeneralWordReg, Modrm, ModrmRegType, RegMem, RmPtr, SegmentReg,
     Size,
 };

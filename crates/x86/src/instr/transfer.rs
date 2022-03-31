@@ -1,6 +1,6 @@
-use crate::arch::x86::GeneralByteReg::Al;
-use crate::arch::x86::SegmentReg::Es;
-use crate::arch::x86::{Cpu, GeneralByteReg, GeneralWordReg, RegMem, RmPtr, SegmentReg};
+use crate::GeneralByteReg::Al;
+use crate::SegmentReg::Es;
+use crate::{Cpu, GeneralByteReg, GeneralWordReg, RegMem, RmPtr, SegmentReg};
 
 pub fn mov_r8_imm8(cpu: &mut Cpu, reg: GeneralByteReg, imm: u8) {
     cpu.set_reg_8(reg, imm);

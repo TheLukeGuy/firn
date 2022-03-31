@@ -1,9 +1,7 @@
-use crate::arch::x86::GeneralWordReg::Sp;
-use crate::arch::x86::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::arch::x86::{
-    Device, Flags, GeneralByteReg, Instr, IoInstr, PortMatchResult, SegmentReg, WordReg,
-};
-use crate::{cpu, System};
+use crate::GeneralWordReg::Sp;
+use crate::SegmentReg::{Cs, Ds, Es, Ss};
+use crate::{Device, Flags, GeneralByteReg, Instr, IoInstr, PortMatchResult, SegmentReg, WordReg};
+use firn_core::{cpu, System};
 use std::io;
 use std::io::Write;
 

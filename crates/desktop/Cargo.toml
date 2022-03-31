@@ -1,0 +1,9 @@
+[package]
+name = "firn_desktop"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = "0.4.19"
+firn_core = { path = "../core" }
+firn_x86 = { path = "../x86" }
