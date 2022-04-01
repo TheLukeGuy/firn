@@ -1,12 +1,13 @@
 use chrono::Utc;
+use firn_arch_x86::device::Cmos;
 use firn_core::cpu::Cpu;
 use firn_core::mem::{BasicMem, Eeprom, MemDump, MemMap, MemRange};
 use firn_core::System;
-use firn_x86::device::Cmos;
 
+// TODO: This file is temporary for testing until a proper GUI is in place
 fn main() {
     let mem = BasicMem::new(640 * 1024);
-    let eeprom = Eeprom::new_with_size(256 * 1024, firn_x86::DEFAULT_BIOS);
+    let eeprom = Eeprom::new_with_size(256 * 1024, firn_arch_x86::DEFAULT_BIOS);
 
     let mut map = MemMap::new(1024 * 1024);
     map.map(MemRange::from_memory_full(&mem), mem);
@@ -15,7 +16,7 @@ fn main() {
         .unwrap_or_else(|err| println!("Failed to dump memory: {}", err));
 
     let system = System::new(map);
-    let mut cpu = firn_x86::Cpu::new(system);
+    let mut cpu = firn_arch_x86::Cpu::new(system);
 
     let cmos = Cmos::new(Utc::now());
     cpu.add_device(cmos);

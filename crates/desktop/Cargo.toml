@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-chrono = "0.4.19"
 firn_core = { path = "../core" }
-firn_x86 = { path = "../x86" }
+firn_arch_x86 = { path = "../arch_x86" }
+
+chrono = "0.4.19"

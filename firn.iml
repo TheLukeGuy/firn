@@ -7,7 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/core/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/core/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/desktop/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/crates/x86/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/arch_x86/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/core/target" />

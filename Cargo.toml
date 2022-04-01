@@ -3,13 +3,17 @@ name = "firn"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-firn_core = { path = "crates/core" }
-
 [workspace]
 members = [
     "crates/core",
     "crates/desktop",
 
-    "crates/x86",
+    "crates/arch_x86",
 ]
+
+[dependencies]
+firn_core = { path = "crates/core" }
+firn_arch_x86 = { path = "crates/arch_x86", optional = true }
+
+[features]
+arch_x86 = ["firn_arch_x86"]
