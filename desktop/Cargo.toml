@@ -1,11 +1,10 @@
 [package]
-name = "firn_arch_x86"
+name = "firn_desktop"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 firn_core = { path = "../core" }
+firn_arch_x86 = { path = "../arch/x86" }
 
-num-traits = "0.2.14"
-num-derive = "0.3.3"
 chrono = "0.4.19"

@@ -5,15 +5,14 @@ edition = "2021"
 
 [workspace]
 members = [
-    "crates/core",
-    "crates/desktop",
-
-    "crates/arch_x86",
+    "core",
+    "desktop",
+    "arch/x86",
 ]
 
 [dependencies]
-firn_core = { path = "crates/core" }
-firn_arch_x86 = { path = "crates/arch_x86", optional = true }
+firn_core = { path = "core" }
+firn_arch_x86 = { path = "arch/x86", optional = true }
 
 [features]
 arch_x86 = ["firn_arch_x86"]
