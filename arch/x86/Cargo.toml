@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 firn-core = { path = "../../core" }
+firn-macros = { path = "../../macros" }
 
 num-traits = "0.2.14"
 num-derive = "0.3.3"

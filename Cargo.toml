@@ -7,11 +7,14 @@ edition = "2021"
 members = [
     "core",
     "desktop",
+    "macros",
+
     "arch/x86",
 ]
 
 [dependencies]
 firn-core = { path = "core" }
+firn-macros = { path = "macros" }
 firn-arch-x86 = { path = "arch/x86", optional = true }
 
 [features]
