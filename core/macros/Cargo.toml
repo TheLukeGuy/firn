@@ -1,5 +1,5 @@
 [package]
-name = "firn-macros"
+name = "firn-core-macros"
 version = "0.1.0"
 edition = "2021"
 

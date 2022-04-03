@@ -1,13 +1,12 @@
 use crate::GeneralWordReg::Sp;
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::{Device, Flags, GeneralByteReg, Instr, IoInstr, PortMatchResult, SegmentReg, WordReg};
+use crate::{Flags, GeneralByteReg, Instr, SegmentReg, WordReg};
 use firn_core::{cpu, System};
 use std::io;
 use std::io::Write;
 
 pub struct Cpu {
     pub system: System,
-    devices: Vec<Box<dyn Device>>,
 
     regs: [u8; 2 * 8],
     segments: [u16; 4],
@@ -21,7 +20,6 @@ impl Cpu {
     pub fn new(system: System) -> Self {
         Self {
             system,
-            devices: Vec::new(),
 
             regs: [0; 2 * 8],
             segments: [0; 4],
@@ -164,20 +162,6 @@ impl Cpu {
         self.push_16(value);
     }
 
-    pub fn add_device(&mut self, device: impl Device + 'static) {
-        self.devices.push(Box::new(device));
-    }
-
-    pub fn match_port(&mut self, port: u16, instr: &mut IoInstr) {
-        for device in &mut self.devices {
-            if let PortMatchResult::Matched = device.match_port(port, instr) {
-                return;
-            }
-        }
-
-        println!("Unhandled port: {:#x} | {:?}", port, instr);
-    }
-
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
         let segment = self.reg_16(segment.into()) as usize;
 
@@ -186,10 +170,8 @@ impl Cpu {
 }
 
 impl cpu::Cpu for Cpu {
-    fn init(&mut self) {
-        for device in &mut self.devices {
-            device.init();
-        }
+    fn system(&mut self) -> &mut System {
+        &mut self.system
     }
 
     fn reset(&mut self) {
@@ -202,10 +184,6 @@ impl cpu::Cpu for Cpu {
     }
 
     fn step(&mut self) {
-        for device in &mut self.devices {
-            device.step();
-        }
-
         print!("({:#x}) ", self.linear_mem(Cs, self.ip));
         io::stdout().flush().unwrap();
 

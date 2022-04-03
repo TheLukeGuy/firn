@@ -12,14 +12,13 @@ fn main() {
     let mut map = MemMap::new(1024 * 1024);
     map.map(MemRange::from_memory_full(&mem), mem);
     map.map(MemRange::new(0xc0000, 0xfffff), eeprom);
-    map.dump_to_file("../../../mem.bin")
+    map.dump_to_file("mem.bin")
         .unwrap_or_else(|err| println!("Failed to dump memory: {}", err));
 
-    let system = System::new(map);
-    let mut cpu = firn_arch_x86::Cpu::new(system);
-
+    let mut system = System::new(map);
     let cmos = Cmos::new(Utc::now());
-    cpu.add_device(cmos);
+    system.add_device(cmos);
 
+    let mut cpu = firn_arch_x86::Cpu::new(system);
     cpu.run();
 }

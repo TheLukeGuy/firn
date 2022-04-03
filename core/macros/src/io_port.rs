@@ -1,3 +1,4 @@
+use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::{format_ident, quote};
 use syn::spanned::Spanned;
@@ -47,10 +48,7 @@ fn io_port_variant(sig: &Signature) -> syn::Result<Ident> {
     Ok(format_ident!("{}", variant))
 }
 
-pub fn io_port_impl(
-    args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn io_port_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let port: Expr = match syn::parse(args) {
         Ok(port) => port,
         Err(err) => return err.into_compile_error().into(),
@@ -66,14 +64,38 @@ pub fn io_port_impl(
 
     let name = &input.sig.ident;
     let meta_name = format_ident!("{}_meta", name);
+    let downcast_name = format_ident!("{}_downcast", name);
+
+    let params: Vec<_> = input
+        .sig
+        .inputs
+        .iter()
+        .filter_map(|param| match param {
+            FnArg::Typed(param) => Some(param),
+            FnArg::Receiver(_) => None,
+        })
+        .collect();
+    let param_names: Vec<_> = params.iter().map(|param| &param.pat).collect();
+    let return_type = &input.sig.output;
 
     let expanded = quote! {
         #input
 
-        #vis fn #meta_name(&self) -> firn_core::device::IoPortWrapper<Self> {
-            firn_core::device::IoPortWrapper {
+        #vis fn #downcast_name(
+            device: &mut dyn firn_core::device::Device,
+            #(#params),*
+        ) #return_type {
+            let downcasted = device
+                .downcast_mut::<Self>()
+                .expect("device cannot be downcast to Self");
+
+            downcasted.#name(#(#param_names),*)
+        }
+
+        #vis fn #meta_name(&self) -> firn_core::device::IoPortMeta {
+            firn_core::device::IoPortMeta {
                 port: #port,
-                handler: firn_core::device::IoPortHandler::#variant(Self::#name),
+                handler: firn_core::device::IoPortHandler::#variant(Self::#downcast_name),
             }
         }
     };

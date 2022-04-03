@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+firn-core-macros = { path = "macros" }
+
 linked-hash-map = "0.5.4"
+multimap = "0.8.3"
+downcast-rs = "1.2.0"

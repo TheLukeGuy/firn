@@ -1,5 +1,6 @@
-use crate::{Device, IoInstr, PortMatchResult};
 use chrono::{DateTime, Datelike, Timelike, Utc};
+use firn_core::device::{io_port, io_ports, Device, IoPortHandler};
+use multimap::MultiMap;
 use std::time;
 use std::time::{Duration, SystemTime};
 
@@ -85,33 +86,28 @@ impl Cmos {
     }
 }
 
-impl Device for Cmos {
-    fn match_port(&mut self, port: u16, instr: &mut IoInstr) -> PortMatchResult {
-        if port != 0x70 && port != 0x71 {
-            return PortMatchResult::Unknown;
-        }
+impl Cmos {
+    #[io_port(0x70)]
+    pub fn select_reg(&mut self, value: u8) {
+        // TODO: Implement NMI disable
+        let _nmi_disable = value >> 7;
+        self.selected_reg = value & !0x80;
 
-        match (port, instr) {
-            (0x70, IoInstr::Out8(value)) => {
-                // TODO: Implement NMI disable
-                let _nmi_disable = *value >> 7;
-                self.selected_reg = *value & !0x80;
-
-                println!("Using CMOS register: {:#x}", self.selected_reg);
-            }
-            (0x71, IoInstr::In8(value)) => {
-                **value = self.regs[self.selected_reg as usize];
-            }
-            (0x71, IoInstr::Out8(value)) => {
-                self.regs[self.selected_reg as usize] = *value;
-            }
-
-            _ => (),
-        }
-
-        PortMatchResult::Matched
+        println!("Using CMOS register: {:#x}", self.selected_reg);
     }
 
+    #[io_port(0x71)]
+    pub fn reg_value(&mut self) -> u8 {
+        self.regs[self.selected_reg as usize]
+    }
+
+    #[io_port(0x71)]
+    pub fn set_reg_value(&mut self, value: u8) {
+        self.regs[self.selected_reg as usize] = value;
+    }
+}
+
+impl Device for Cmos {
     fn init(&mut self) {
         let start_time = self.current_time();
         self.start_time = Some(start_time);
@@ -171,5 +167,9 @@ impl Device for Cmos {
         self.regs[MONTH_REG] = month;
         self.regs[YEAR_REG] = year;
         self.stop_updating_rtc();
+    }
+
+    fn ports(&self) -> MultiMap<u16, IoPortHandler> {
+        io_ports![select_reg, reg_value, set_reg_value]
     }
 }
