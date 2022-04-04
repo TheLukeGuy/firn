@@ -1,6 +1,5 @@
-use crate::GeneralWordReg::Sp;
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::{Flags, GeneralByteReg, Instr, SegmentReg, WordReg};
+use crate::{ExtSystem, Flags, GeneralByteReg, Instr, WordReg};
 use firn_core::{cpu, System};
 use std::io;
 use std::io::Write;
@@ -77,92 +76,6 @@ impl Cpu {
         let old = self.reg_16(reg);
         self.set_reg_16(reg, old.wrapping_sub(amount));
     }
-
-    pub fn mem_8(&self, segment: SegmentReg, offset: u16) -> u8 {
-        let linear = self.linear_mem(segment, offset);
-
-        self.system.mem[linear]
-    }
-
-    pub fn mem_16(&self, segment: SegmentReg, offset: u16) -> u16 {
-        let linear = self.linear_mem(segment, offset);
-
-        let low = self.system.mem[linear];
-        let high = self.system.mem[linear + 1];
-
-        u16::from_le_bytes([low, high])
-    }
-
-    pub fn set_mem_8(&mut self, segment: SegmentReg, offset: u16, value: u8) {
-        let linear = self.linear_mem(segment, offset);
-        self.system.mem[linear] = value;
-    }
-
-    pub fn set_mem_16(&mut self, segment: SegmentReg, offset: u16, value: u16) {
-        let linear = self.linear_mem(segment, offset);
-
-        let [low, high] = value.to_le_bytes();
-        self.system.mem[linear] = low;
-        self.system.mem[linear + 1] = high;
-    }
-
-    pub fn read_mem_8(&mut self) -> u8 {
-        let value = self.mem_8(Cs, self.ip);
-        self.ip += 1;
-
-        value
-    }
-
-    pub fn read_mem_16(&mut self) -> u16 {
-        let value = self.mem_16(Cs, self.ip);
-        self.ip += 2;
-
-        value
-    }
-
-    pub fn push_8(&mut self, value: u8) {
-        let sp = self.reg_16(Sp.into()) - 1;
-        self.set_reg_16(Sp.into(), sp);
-        self.set_mem_8(Ss, sp, value);
-    }
-
-    pub fn push_16(&mut self, value: u16) {
-        let sp = self.reg_16(Sp.into()) - 2;
-        self.set_reg_16(Sp.into(), sp);
-        self.set_mem_16(Ss, sp, value);
-    }
-
-    pub fn pop_8(&mut self) -> u8 {
-        let sp = self.reg_16(Sp.into());
-        let value = self.mem_8(Ss, sp);
-        self.inc_reg_16(Sp.into(), 1);
-
-        value
-    }
-
-    pub fn pop_16(&mut self) -> u16 {
-        let sp = self.reg_16(Sp.into());
-        let value = self.mem_16(Ss, sp);
-        self.inc_reg_16(Sp.into(), 2);
-
-        value
-    }
-
-    pub fn push_reg_8(&mut self, reg: GeneralByteReg) {
-        let value = self.reg_8(reg);
-        self.push_8(value);
-    }
-
-    pub fn push_reg_16(&mut self, reg: WordReg) {
-        let value = self.reg_16(reg);
-        self.push_16(value);
-    }
-
-    fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
-        let segment = self.reg_16(segment.into()) as usize;
-
-        (segment << 4) + offset as usize
-    }
 }
 
 impl cpu::Cpu for Cpu {
@@ -176,7 +89,7 @@ impl cpu::Cpu for Cpu {
     }
 
     fn step(sys: &mut System<Self>) {
-        print!("({:#x}) ", sys.cpu.linear_mem(Cs, sys.cpu.ip));
+        print!("({:#x}) ", sys.linear_mem(Cs, sys.cpu.ip));
         io::stdout().flush().unwrap();
 
         let instr = Instr::decode(&mut sys.cpu);
