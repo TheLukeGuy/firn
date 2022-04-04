@@ -26,6 +26,16 @@ impl MemMap {
         self.mappings.insert(range, Box::new(memory));
     }
 
+    pub fn map_from(&mut self, start: usize, end: usize, memory: impl Mem + 'static) {
+        let range = MemRange::new(start, end);
+        self.map(range, memory);
+    }
+
+    pub fn map_full(&mut self, memory: impl Mem + 'static) {
+        let range = MemRange::from_memory_full(&memory);
+        self.map(range, memory);
+    }
+
     fn map_index(&self, index: usize) -> Option<(MemRange, usize)> {
         if index > self.addressable {
             panic!(
@@ -49,13 +59,16 @@ impl MemMap {
 }
 
 impl MemDump for MemMap {
+    fn dump(&self) -> Vec<u8> {
+        (0..self.addressable).map(|index| self[index]).collect()
+    }
+
     fn dump_to_str(&self, radix: DumpRadix) -> String {
         mem::format_str_dump(radix, (0..self.addressable).map(|index| self[index]))
     }
 
     fn dump_to_file(&self, path: impl AsRef<Path>) -> std::io::Result<()> {
-        let bytes: Vec<u8> = (0..self.addressable).map(|index| self[index]).collect();
-        fs::write(path, bytes)
+        fs::write(path, self.dump())
     }
 }
 

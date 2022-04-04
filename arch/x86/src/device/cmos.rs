@@ -39,6 +39,10 @@ impl Cmos {
         }
     }
 
+    pub fn new_current_time() -> Self {
+        Self::new(Utc::now())
+    }
+
     pub fn sync(&mut self) {
         let start_time = self
             .start_time

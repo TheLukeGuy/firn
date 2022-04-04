@@ -36,6 +36,7 @@ pub trait Mem: Deref<Target = [u8]> + DerefMut {
 }
 
 pub trait MemDump {
+    fn dump(&self) -> Vec<u8>;
     fn dump_to_str(&self, radix: DumpRadix) -> String;
     fn dump_to_file(&self, path: impl AsRef<Path>) -> io::Result<()>;
 }

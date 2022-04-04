@@ -24,6 +24,10 @@ impl Mem for BasicMem {
 }
 
 impl MemDump for BasicMem {
+    fn dump(&self) -> Vec<u8> {
+        self.memory.clone()
+    }
+
     fn dump_to_str(&self, radix: DumpRadix) -> String {
         mem::format_str_dump(radix, (*self).iter().copied())
     }
