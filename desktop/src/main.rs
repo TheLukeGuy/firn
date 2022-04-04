@@ -1,5 +1,5 @@
 use firn_arch_x86::device::Cmos;
-use firn_core::cpu::Cpu;
+use firn_arch_x86::Cpu;
 use firn_core::mem::{BasicMem, Eeprom, MemDump, MemMap};
 use firn_core::System;
 
@@ -11,14 +11,15 @@ fn main() {
     let mut map = MemMap::new(1024 * 1024);
     map.map_full(mem);
     map.map_from(0xc0000, 0xfffff, eeprom);
+
     map.dump_to_file("mem.bin")
         .unwrap_or_else(|err| println!("Failed to dump memory: {}", err));
 
-    let mut system = System::new(map);
+    let cpu = Cpu::new();
+    let mut system = System::new(cpu, map);
 
     let cmos = Cmos::new_current_time();
     system.add_device(cmos);
 
-    let mut cpu = firn_arch_x86::Cpu::new(system);
-    cpu.run();
+    system.run();
 }

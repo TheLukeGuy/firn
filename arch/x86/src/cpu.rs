@@ -6,8 +6,6 @@ use std::io;
 use std::io::Write;
 
 pub struct Cpu {
-    pub system: System,
-
     regs: [u8; 2 * 8],
     segments: [u16; 4],
     pub flags: Flags,
@@ -17,10 +15,8 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    pub fn new(system: System) -> Self {
+    pub fn new() -> Self {
         Self {
-            system,
-
             regs: [0; 2 * 8],
             segments: [0; 4],
             flags: Flags::new(),
@@ -170,10 +166,6 @@ impl Cpu {
 }
 
 impl cpu::Cpu for Cpu {
-    fn system(&mut self) -> &mut System {
-        &mut self.system
-    }
-
     fn reset(&mut self) {
         self.set_reg_16(Cs.into(), 0xffff);
         self.set_reg_16(Ds.into(), 0x0000);
@@ -183,13 +175,13 @@ impl cpu::Cpu for Cpu {
         self.ip = 0;
     }
 
-    fn step(&mut self) {
-        print!("({:#x}) ", self.linear_mem(Cs, self.ip));
+    fn step(sys: &mut System<Self>) {
+        print!("({:#x}) ", sys.cpu.linear_mem(Cs, sys.cpu.ip));
         io::stdout().flush().unwrap();
 
-        let instr = Instr::decode(self);
-        self.decoded += 1;
-        println!("({:02}) Decoded: {:?}", self.decoded, instr);
-        instr.execute(self);
+        let instr = Instr::decode(&mut sys.cpu);
+        sys.cpu.decoded += 1;
+        println!("({:02}) Decoded: {:?}", sys.cpu.decoded, instr);
+        instr.execute(&mut sys.cpu);
     }
 }
