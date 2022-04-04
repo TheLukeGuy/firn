@@ -1,6 +1,9 @@
 use crate::GeneralWordReg::{Bp, Bx, Di, Si};
 use crate::SegmentReg::{Ds, Ss};
-use crate::{Cpu, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, WordReg};
+use crate::{
+    Cpu, ExtSystem, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, WordReg,
+};
+use firn_core::System;
 
 #[derive(Debug, Copy, Clone)]
 pub enum ModrmRegType {
@@ -49,54 +52,54 @@ pub enum RegMem {
 }
 
 impl RegMem {
-    pub fn get_8(&self, cpu: &Cpu) -> u8 {
+    pub fn get_8(&self, sys: &System<Cpu>) -> u8 {
         match self {
             RegMem::Reg(reg) => match reg {
-                GeneralReg::Byte(reg) => cpu.reg_8(*reg),
+                GeneralReg::Byte(reg) => sys.cpu.reg_8(*reg),
                 _ => panic!("cannot get a byte-sized value from a non-byte-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(cpu);
-                cpu.mem_8(segment, offset)
+                let (segment, offset) = ptr.address(&sys.cpu);
+                sys.mem_8(segment, offset)
             }
         }
     }
 
-    pub fn get_16(&self, cpu: &Cpu) -> u16 {
+    pub fn get_16(&self, sys: &System<Cpu>) -> u16 {
         match self {
             RegMem::Reg(reg) => match reg {
-                GeneralReg::Word(reg) => cpu.reg_16((*reg).into()),
+                GeneralReg::Word(reg) => sys.cpu.reg_16((*reg).into()),
                 _ => panic!("cannot get a word-sized value from a non-word-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(cpu);
-                cpu.mem_16(segment, offset)
+                let (segment, offset) = ptr.address(&sys.cpu);
+                sys.mem_16(segment, offset)
             }
         }
     }
 
-    pub fn set_8(&self, cpu: &mut Cpu, value: u8) {
+    pub fn set_8(&self, sys: &mut System<Cpu>, value: u8) {
         match self {
             RegMem::Reg(reg) => match reg {
-                GeneralReg::Byte(reg) => cpu.set_reg_8(*reg, value),
+                GeneralReg::Byte(reg) => sys.cpu.set_reg_8(*reg, value),
                 _ => panic!("cannot set a byte-sized value to a non-byte-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(cpu);
-                cpu.set_mem_8(segment, offset, value);
+                let (segment, offset) = ptr.address(&sys.cpu);
+                sys.set_mem_8(segment, offset, value);
             }
         }
     }
 
-    pub fn set_16(&self, cpu: &mut Cpu, value: u16) {
+    pub fn set_16(&self, sys: &mut System<Cpu>, value: u16) {
         match self {
             RegMem::Reg(reg) => match reg {
-                GeneralReg::Word(reg) => cpu.set_reg_16((*reg).into(), value),
+                GeneralReg::Word(reg) => sys.cpu.set_reg_16((*reg).into(), value),
                 _ => panic!("cannot set a word-sized value to a non-word-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(cpu);
-                cpu.set_mem_16(segment, offset, value);
+                let (segment, offset) = ptr.address(&sys.cpu);
+                sys.set_mem_16(segment, offset, value);
             }
         }
     }
@@ -109,7 +112,12 @@ pub struct Modrm {
 }
 
 impl Modrm {
-    pub fn decode(cpu: &mut Cpu, modrm: u8, reg_type: Option<ModrmRegType>, rm_size: Size) -> Self {
+    pub fn decode(
+        sys: &mut System<Cpu>,
+        modrm: u8,
+        reg_type: Option<ModrmRegType>,
+        rm_size: Size,
+    ) -> Self {
         let x = (modrm / 0o100) % 0o10;
         let r = (modrm / 0o10) % 0o10;
         let m = modrm % 0o10;
@@ -143,10 +151,10 @@ impl Modrm {
         }
 
         let displacement = match x {
-            0 if m == 6 => Some(Displacement::UnsignedWord(cpu.read_mem_16())),
+            0 if m == 6 => Some(Displacement::UnsignedWord(sys.read_mem_16())),
             0 => None,
-            1 => Some(Displacement::SignedByte(cpu.read_mem_8() as i8)),
-            2 => Some(Displacement::UnsignedWord(cpu.read_mem_16())),
+            1 => Some(Displacement::SignedByte(sys.read_mem_8() as i8)),
+            2 => Some(Displacement::UnsignedWord(sys.read_mem_16())),
 
             _ => panic!("invalid x (in xrm octal) in ModRM byte: {}", x),
         };
