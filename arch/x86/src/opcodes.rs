@@ -1,10 +1,9 @@
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::{instr, Cpu, ExtSystem, GeneralByteReg, GeneralWordReg, Instr, SegmentReg};
-use firn_core::System;
+use crate::{instr, ExtSystem, GeneralByteReg, GeneralWordReg, Instr, SegmentReg, System};
 use std::io;
 use std::io::Write;
 
-fn match_opcode(sys: &mut System<Cpu>, opcode: u8, segment: SegmentReg, rep: bool) -> Instr {
+fn match_opcode(sys: &mut System, opcode: u8, segment: SegmentReg, rep: bool) -> Instr {
     match opcode {
         0x00 => Instr::new_r8_rm8(instr::arith::add_rm8_r8, &mut sys.cpu),
         0x03 => Instr::new_r16_rm16(instr::arith::add_r16_rm16, &mut sys.cpu),
@@ -62,7 +61,7 @@ fn match_opcode(sys: &mut System<Cpu>, opcode: u8, segment: SegmentReg, rep: boo
     }
 }
 
-pub fn decode(sys: &mut System<Cpu>) -> Instr {
+pub fn decode(sys: &mut System) -> Instr {
     let mut segment = Ds;
     let mut rep = false;
 
@@ -88,11 +87,11 @@ pub fn decode(sys: &mut System<Cpu>) -> Instr {
     }
 }
 
-fn extension(sys: &mut System<Cpu>) -> u8 {
+fn extension(sys: &mut System) -> u8 {
     (sys.read_mem_8() / 0o10) % 0o10
 }
 
-fn invalid(sys: &mut System<Cpu>, opcode: u8, extension: Option<u8>) -> ! {
+fn invalid(sys: &mut System, opcode: u8, extension: Option<u8>) -> ! {
     match extension {
         Some(extension) => panic!(
             "invalid or unimplemented instruction: {:#x} /{}",

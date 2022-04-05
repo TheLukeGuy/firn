@@ -1,7 +1,8 @@
 use crate::GeneralWordReg::Sp;
 use crate::SegmentReg::{Cs, Ss};
 use crate::{Cpu, GeneralByteReg, SegmentReg, WordReg};
-use firn_core::System;
+
+pub type System = firn_core::System<Cpu>;
 
 pub trait ExtSystem {
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize;
@@ -25,7 +26,7 @@ pub trait ExtSystem {
     fn push_reg_16(&mut self, reg: WordReg);
 }
 
-impl ExtSystem for System<Cpu> {
+impl ExtSystem for System {
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
         let segment = self.cpu.reg_16(segment.into()) as usize;
 

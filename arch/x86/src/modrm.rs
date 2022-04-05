@@ -1,9 +1,9 @@
 use crate::GeneralWordReg::{Bp, Bx, Di, Si};
 use crate::SegmentReg::{Ds, Ss};
 use crate::{
-    Cpu, ExtSystem, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, WordReg,
+    Cpu, ExtSystem, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, System,
+    WordReg,
 };
-use firn_core::System;
 
 #[derive(Debug, Copy, Clone)]
 pub enum ModrmRegType {
@@ -52,7 +52,7 @@ pub enum RegMem {
 }
 
 impl RegMem {
-    pub fn get_8(&self, sys: &System<Cpu>) -> u8 {
+    pub fn get_8(&self, sys: &System) -> u8 {
         match self {
             RegMem::Reg(reg) => match reg {
                 GeneralReg::Byte(reg) => sys.cpu.reg_8(*reg),
@@ -65,7 +65,7 @@ impl RegMem {
         }
     }
 
-    pub fn get_16(&self, sys: &System<Cpu>) -> u16 {
+    pub fn get_16(&self, sys: &System) -> u16 {
         match self {
             RegMem::Reg(reg) => match reg {
                 GeneralReg::Word(reg) => sys.cpu.reg_16((*reg).into()),
@@ -78,7 +78,7 @@ impl RegMem {
         }
     }
 
-    pub fn set_8(&self, sys: &mut System<Cpu>, value: u8) {
+    pub fn set_8(&self, sys: &mut System, value: u8) {
         match self {
             RegMem::Reg(reg) => match reg {
                 GeneralReg::Byte(reg) => sys.cpu.set_reg_8(*reg, value),
@@ -91,7 +91,7 @@ impl RegMem {
         }
     }
 
-    pub fn set_16(&self, sys: &mut System<Cpu>, value: u16) {
+    pub fn set_16(&self, sys: &mut System, value: u16) {
         match self {
             RegMem::Reg(reg) => match reg {
                 GeneralReg::Word(reg) => sys.cpu.set_reg_16((*reg).into(), value),
@@ -113,7 +113,7 @@ pub struct Modrm {
 
 impl Modrm {
     pub fn decode(
-        sys: &mut System<Cpu>,
+        sys: &mut System,
         modrm: u8,
         reg_type: Option<ModrmRegType>,
         rm_size: Size,
