@@ -1,10 +1,18 @@
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
 use crate::{ExtSystem, Flags, GeneralByteReg, Instr, WordReg};
+use firn_core::cpu::Restrict;
 use firn_core::{cpu, System};
 use std::io;
 use std::io::Write;
 
+#[derive(Eq, PartialEq)]
+pub enum Feature {
+    Intel80186,
+}
+
 pub struct Cpu {
+    features: Vec<Feature>,
+
     regs: [u8; 2 * 8],
     segments: [u16; 4],
     pub flags: Flags,
@@ -16,6 +24,8 @@ pub struct Cpu {
 impl Cpu {
     pub fn new() -> Self {
         Self {
+            features: Vec::new(),
+
             regs: [0; 2 * 8],
             segments: [0; 4],
             flags: Flags::new(),
@@ -96,5 +106,17 @@ impl cpu::Cpu for Cpu {
         sys.cpu.decoded += 1;
         println!("({:02}) Decoded: {:?}", sys.cpu.decoded, instr);
         instr.execute(&mut sys.cpu);
+    }
+}
+
+impl Restrict for Cpu {
+    type Feature = Feature;
+
+    fn add_feature(&mut self, feature: Self::Feature) {
+        self.features.push(feature);
+    }
+
+    fn has_feature(&self, feature: Self::Feature) -> bool {
+        self.features.contains(&feature)
     }
 }

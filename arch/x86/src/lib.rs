@@ -7,7 +7,7 @@ pub mod opcodes;
 pub mod regs;
 pub mod system;
 
-pub use cpu::Cpu;
+pub use cpu::{Cpu, Feature};
 pub use flags::Flags;
 pub use instr::{Instr, InstrFunc};
 pub use modrm::{Displacement, Modrm, ModrmRegType, RegMem, RmPtr};

@@ -1,5 +1,6 @@
 use firn_arch_x86::device::Cmos;
-use firn_arch_x86::Cpu;
+use firn_arch_x86::{Cpu, Feature};
+use firn_core::cpu::Restrict;
 use firn_core::mem::{BasicMem, Eeprom, MemDump, MemMap};
 use firn_core::System;
 
@@ -15,9 +16,10 @@ fn main() {
     map.dump_to_file("mem.bin")
         .unwrap_or_else(|err| println!("Failed to dump memory: {}", err));
 
-    let cpu = Cpu::new();
-    let mut system = System::new(cpu, map);
+    let mut cpu = Cpu::new();
+    cpu.add_feature(Feature::Intel80186);
 
+    let mut system = System::new(cpu, map);
     let cmos = Cmos::new_current_time();
     system.add_device(cmos);
 
