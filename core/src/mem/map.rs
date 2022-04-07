@@ -1,5 +1,5 @@
 use crate::mem;
-use crate::mem::{DumpRadix, Mem, MemDump, MemRange};
+use crate::mem::{DumpRadix, Mem, MemRange};
 use linked_hash_map::LinkedHashMap;
 use std::fs;
 use std::ops::{Index, IndexMut};
@@ -58,7 +58,11 @@ impl MemMap {
     }
 }
 
-impl MemDump for MemMap {
+impl Mem for MemMap {
+    fn size(&self) -> usize {
+        self.addressable
+    }
+
     fn dump(&self) -> Vec<u8> {
         (0..self.addressable).map(|index| self[index]).collect()
     }

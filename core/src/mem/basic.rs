@@ -1,8 +1,5 @@
-use crate::mem;
-use crate::mem::{DumpRadix, Mem, MemDump};
-use std::ops::{Deref, DerefMut};
-use std::path::Path;
-use std::{fs, io};
+use crate::basic_mem_impl;
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 pub struct BasicMem {
     memory: Vec<u8>,
@@ -17,25 +14,7 @@ impl BasicMem {
     }
 }
 
-impl Mem for BasicMem {
-    fn size(&self) -> usize {
-        self.memory.len()
-    }
-}
-
-impl MemDump for BasicMem {
-    fn dump(&self) -> Vec<u8> {
-        self.memory.clone()
-    }
-
-    fn dump_to_str(&self, radix: DumpRadix) -> String {
-        mem::format_str_dump(radix, (*self).iter().copied())
-    }
-
-    fn dump_to_file(&self, path: impl AsRef<Path>) -> io::Result<()> {
-        fs::write(path, &self.memory)
-    }
-}
+basic_mem_impl!(BasicMem, memory);
 
 impl Deref for BasicMem {
     type Target = [u8];
@@ -48,6 +27,20 @@ impl Deref for BasicMem {
 impl DerefMut for BasicMem {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.memory
+    }
+}
+
+impl Index<usize> for BasicMem {
+    type Output = u8;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.memory[index]
+    }
+}
+
+impl IndexMut<usize> for BasicMem {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.memory[index]
     }
 }
 

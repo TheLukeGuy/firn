@@ -1,7 +1,7 @@
 use firn_arch_x86::device::Cmos;
 use firn_arch_x86::{Cpu, Feature};
 use firn_core::cpu::Restrict;
-use firn_core::mem::{BasicMem, Eeprom, MemDump, MemMap};
+use firn_core::mem::{BasicMem, Eeprom, Mem, MemDump, MemMap};
 use firn_core::System;
 
 // TODO: This file is temporary for testing until a proper GUI is in place

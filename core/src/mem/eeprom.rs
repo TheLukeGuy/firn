@@ -1,5 +1,5 @@
-use crate::mem::Mem;
-use std::ops::{Deref, DerefMut};
+use crate::basic_mem_impl;
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 use std::path::Path;
 use std::{fs, io};
 
@@ -45,11 +45,7 @@ impl Eeprom {
     }
 }
 
-impl Mem for Eeprom {
-    fn size(&self) -> usize {
-        self.memory.len()
-    }
-}
+basic_mem_impl!(Eeprom, memory);
 
 impl Deref for Eeprom {
     type Target = [u8];
@@ -62,6 +58,20 @@ impl Deref for Eeprom {
 impl DerefMut for Eeprom {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.memory
+    }
+}
+
+impl Index<usize> for Eeprom {
+    type Output = u8;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.memory[index]
+    }
+}
+
+impl IndexMut<usize> for Eeprom {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.memory[index]
     }
 }
 
