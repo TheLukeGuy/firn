@@ -14,7 +14,7 @@ pub mod stack;
 pub mod strings;
 pub mod transfer;
 
-pub fn rep(sys: &mut System, rep: bool) -> Range<u16> {
+pub fn rep(sys: &System, rep: bool) -> Range<u16> {
     if rep {
         0..sys.cpu.reg_16(Cx.into())
     } else {
