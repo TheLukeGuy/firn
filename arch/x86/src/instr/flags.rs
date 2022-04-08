@@ -1,9 +1,9 @@
-use crate::Cpu;
+use crate::System;
 
-pub fn cli(cpu: &mut Cpu) {
-    cpu.flags.interrupt = false;
+pub fn cli(sys: &mut System) {
+    sys.cpu.flags.interrupt = false;
 }
 
-pub fn cld(cpu: &mut Cpu) {
-    cpu.flags.direction = false;
+pub fn cld(sys: &mut System) {
+    sys.cpu.flags.direction = false;
 }

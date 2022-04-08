@@ -1,8 +1,7 @@
 use crate::GeneralWordReg::{Bp, Bx, Di, Si};
 use crate::SegmentReg::{Ds, Ss};
 use crate::{
-    Cpu, ExtSystem, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, System,
-    WordReg,
+    ExtSystem, GeneralByteReg, GeneralReg, GeneralWordReg, Reg, SegmentReg, Size, System, WordReg,
 };
 
 #[derive(Debug, Copy, Clone)]
@@ -27,11 +26,11 @@ pub struct RmPtr {
 }
 
 impl RmPtr {
-    pub fn address(&self, cpu: &Cpu) -> (SegmentReg, u16) {
+    pub fn address(&self, sys: &System) -> (SegmentReg, u16) {
         let mut offset: u16 = 0;
 
         for reg in [self.first_reg, self.second_reg].into_iter().flatten() {
-            let value = cpu.reg_16(reg.into());
+            let value = sys.cpu.reg_16(reg.into());
             offset = offset.wrapping_add(value);
         }
 
@@ -59,7 +58,7 @@ impl RegMem {
                 _ => panic!("cannot get a byte-sized value from a non-byte-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(&sys.cpu);
+                let (segment, offset) = ptr.address(sys);
                 sys.mem_8(segment, offset)
             }
         }
@@ -72,7 +71,7 @@ impl RegMem {
                 _ => panic!("cannot get a word-sized value from a non-word-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(&sys.cpu);
+                let (segment, offset) = ptr.address(sys);
                 sys.mem_16(segment, offset)
             }
         }
@@ -85,7 +84,7 @@ impl RegMem {
                 _ => panic!("cannot set a byte-sized value to a non-byte-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(&sys.cpu);
+                let (segment, offset) = ptr.address(sys);
                 sys.set_mem_8(segment, offset, value);
             }
         }
@@ -98,7 +97,7 @@ impl RegMem {
                 _ => panic!("cannot set a word-sized value to a non-word-sized RM"),
             },
             RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(&sys.cpu);
+                let (segment, offset) = ptr.address(sys);
                 sys.set_mem_16(segment, offset, value);
             }
         }

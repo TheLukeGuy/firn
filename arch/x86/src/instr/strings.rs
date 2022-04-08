@@ -1,36 +1,36 @@
 use crate::GeneralByteReg::Al;
 use crate::GeneralWordReg::{Ax, Di, Si};
 use crate::SegmentReg::Es;
-use crate::{instr, Cpu};
+use crate::{instr, ExtSystem, System};
 
-pub fn stosw(cpu: &mut Cpu, rep: bool) {
-    for offset in instr::rep(cpu, rep) {
-        let di = cpu.reg_16(Di.into());
-        let value = cpu.reg_16(Ax.into());
-        cpu.set_mem_16(Es, di.wrapping_add(offset), value);
+pub fn stosw(sys: &mut System, rep: bool) {
+    for offset in instr::rep(sys, rep) {
+        let di = sys.cpu.reg_16(Di.into());
+        let value = sys.cpu.reg_16(Ax.into());
+        sys.set_mem_16(Es, di.wrapping_add(offset), value);
 
-        if cpu.flags.direction {
-            cpu.dec_reg_16(Si.into(), 2);
-            cpu.dec_reg_16(Di.into(), 2);
+        if sys.cpu.flags.direction {
+            sys.cpu.dec_reg_16(Si.into(), 2);
+            sys.cpu.dec_reg_16(Di.into(), 2);
         } else {
-            cpu.inc_reg_16(Si.into(), 2);
-            cpu.inc_reg_16(Di.into(), 2);
+            sys.cpu.inc_reg_16(Si.into(), 2);
+            sys.cpu.inc_reg_16(Di.into(), 2);
         }
     }
 }
 
-pub fn stosb(cpu: &mut Cpu, rep: bool) {
-    for offset in instr::rep(cpu, rep) {
-        let di = cpu.reg_16(Di.into());
-        let value = cpu.reg_8(Al);
-        cpu.set_mem_8(Es, di.wrapping_add(offset), value);
+pub fn stosb(sys: &mut System, rep: bool) {
+    for offset in instr::rep(sys, rep) {
+        let di = sys.cpu.reg_16(Di.into());
+        let value = sys.cpu.reg_8(Al);
+        sys.set_mem_8(Es, di.wrapping_add(offset), value);
 
-        if cpu.flags.direction {
-            cpu.dec_reg_16(Si.into(), 1);
-            cpu.dec_reg_16(Di.into(), 1);
+        if sys.cpu.flags.direction {
+            sys.cpu.dec_reg_16(Si.into(), 1);
+            sys.cpu.dec_reg_16(Di.into(), 1);
         } else {
-            cpu.inc_reg_16(Si.into(), 1);
-            cpu.inc_reg_16(Di.into(), 1);
+            sys.cpu.inc_reg_16(Si.into(), 1);
+            sys.cpu.inc_reg_16(Di.into(), 1);
         }
     }
 }

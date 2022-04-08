@@ -102,10 +102,10 @@ impl cpu::Cpu for Cpu {
         print!("({:#x}) ", sys.linear_mem(Cs, sys.cpu.ip));
         io::stdout().flush().unwrap();
 
-        let instr = Instr::decode(&mut sys.cpu);
+        let instr = Instr::decode(sys);
         sys.cpu.decoded += 1;
         println!("({:02}) Decoded: {:?}", sys.cpu.decoded, instr);
-        instr.execute(&mut sys.cpu);
+        instr.execute(sys);
     }
 }
 
