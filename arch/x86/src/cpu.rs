@@ -120,3 +120,9 @@ impl Restrict for Cpu {
         self.features.contains(&feature)
     }
 }
+
+impl Default for Cpu {
+    fn default() -> Self {
+        Self::new()
+    }
+}
