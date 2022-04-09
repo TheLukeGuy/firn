@@ -5,7 +5,7 @@ use std::str::FromStr;
 use strum_macros::EnumString;
 use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, Error, ItemFn, Token};
+use syn::{parse_macro_input, Error, FnArg, ItemFn, Token, Type};
 
 #[derive(Eq, PartialEq, EnumString)]
 #[strum(ascii_case_insensitive)]
@@ -201,14 +201,36 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let name = &input.sig.ident;
     let meta_name = format_ident!("{}_meta", name);
 
+    let last_param = input.sig.inputs.last().unwrap();
+    let takes_prefixes = match last_param {
+        FnArg::Typed(typed) => match &*typed.ty {
+            Type::Reference(reference) => match &*reference.elem {
+                Type::Path(path) => path.path.segments.last().unwrap().ident == "Prefixes",
+                _ => false,
+            },
+            _ => false,
+        },
+        _ => false,
+    };
+
+    let instr_call = if takes_prefixes {
+        quote! {
+            #name(sys, #(#operand_names,)* prefixes);
+        }
+    } else {
+        quote! {
+            #name(sys, #(#operand_names),*);
+        }
+    };
+
     let expanded = quote! {
-        #vis fn #name(sys: &mut crate::System, opcode: u8) {
+        #vis fn #name(sys: &mut crate::System, opcode: u8, prefixes: &crate::Prefixes) {
             #input
 
             #modrm_decode
             #(#operand_defs)*
 
-            #name(sys, #(#operand_names),*);
+            #instr_call
         }
 
         #vis fn #meta_name() -> crate::InstrMeta {

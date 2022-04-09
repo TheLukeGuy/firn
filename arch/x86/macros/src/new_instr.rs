@@ -6,6 +6,7 @@ use syn::{parse_macro_input, Path, PathSegment, Token};
 
 struct NewInstrArgs {
     opcode: Ident,
+    prefixes: Ident,
     func: Path,
 }
 
@@ -13,14 +14,24 @@ impl Parse for NewInstrArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let opcode = input.parse()?;
         input.parse::<Token![,]>()?;
+        let prefixes = input.parse()?;
+        input.parse::<Token![,]>()?;
         let func = input.parse()?;
 
-        Ok(Self { opcode, func })
+        Ok(Self {
+            opcode,
+            prefixes,
+            func,
+        })
     }
 }
 
 pub fn new_instr_impl(input: TokenStream) -> TokenStream {
-    let NewInstrArgs { opcode, func } = parse_macro_input!(input as NewInstrArgs);
+    let NewInstrArgs {
+        opcode,
+        prefixes,
+        func,
+    } = parse_macro_input!(input as NewInstrArgs);
 
     let mut meta_func = func.clone();
     let last_segment = meta_func.segments.last_mut().unwrap();
@@ -28,7 +39,7 @@ pub fn new_instr_impl(input: TokenStream) -> TokenStream {
     *last_segment = PathSegment::from(meta_name);
 
     let expanded = quote! {
-        crate::Instr::new(#opcode, #func, #meta_func)
+        crate::Instr::new(#opcode, #prefixes, #func, #meta_func)
     };
 
     expanded.into()
