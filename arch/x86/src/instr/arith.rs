@@ -1,8 +1,10 @@
 use crate::GeneralByteReg::Al;
 use crate::GeneralWordReg::Ax;
 use crate::{GeneralByteReg, GeneralWordReg, RegMem, System};
+use firn_arch_x86_macros::instr;
 
-pub fn xor_rm16_r16(sys: &mut System, reg: GeneralWordReg, rm: RegMem) {
+#[instr(XOR r/m16, r16)]
+pub fn xor_rm16_r16(sys: &mut System, rm: RegMem, reg: GeneralWordReg) {
     let old = rm.get_16(sys);
     let value = old ^ sys.cpu.reg_16(reg.into());
     rm.set_16(sys, value);
@@ -10,16 +12,19 @@ pub fn xor_rm16_r16(sys: &mut System, reg: GeneralWordReg, rm: RegMem) {
     sys.cpu.flags.set_pzs_from_u16(value);
 }
 
+#[instr(CMP AL, imm8)]
 pub fn cmp_al_imm8(sys: &mut System, imm: u8) {
     let old = sys.cpu.reg_8(Al);
     cmp_8(sys, old, imm);
 }
 
+#[instr(CMP r/m8, imm8)]
 pub fn cmp_rm8_imm8(sys: &mut System, rm: RegMem, imm: u8) {
     let old = rm.get_8(sys);
     cmp_8(sys, old, imm);
 }
 
+#[instr(ADD r16, r/m16)]
 pub fn add_r16_rm16(sys: &mut System, reg: GeneralWordReg, rm: RegMem) {
     let old = sys.cpu.reg_16(reg.into());
     let addend = rm.get_16(sys);
@@ -27,6 +32,7 @@ pub fn add_r16_rm16(sys: &mut System, reg: GeneralWordReg, rm: RegMem) {
     sys.cpu.set_reg_16(reg.into(), value);
 }
 
+#[instr(ADD r/m16, imm8)]
 pub fn add_rm16_imm8(sys: &mut System, rm: RegMem, imm: u8) {
     let old = rm.get_16(sys);
     let addend = (imm as i8) as u16;
@@ -34,19 +40,22 @@ pub fn add_rm16_imm8(sys: &mut System, rm: RegMem, imm: u8) {
     rm.set_16(sys, value);
 }
 
+#[instr(ADC AX, imm16)]
 pub fn adc_ax_imm16(sys: &mut System, imm: u16) {
     let old = sys.cpu.reg_16(Ax.into());
     let value = adc_16(sys, old, imm);
     sys.cpu.set_reg_16(Ax.into(), value);
 }
 
-pub fn add_rm8_r8(sys: &mut System, reg: GeneralByteReg, rm: RegMem) {
+#[instr(ADD r/m8, r8)]
+pub fn add_rm8_r8(sys: &mut System, rm: RegMem, reg: GeneralByteReg) {
     let old = rm.get_8(sys);
     let addend = sys.cpu.reg_8(reg);
     let value = add_8(sys, old, addend);
     rm.set_8(sys, value);
 }
 
+#[instr(CMP AX, imm16)]
 pub fn cmp_ax_imm16(sys: &mut System, imm: u16) {
     let old = sys.cpu.reg_16(Ax.into());
     cmp_16(sys, old, imm);

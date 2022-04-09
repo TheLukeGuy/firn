@@ -13,6 +13,9 @@ pub trait ExtSystem {
     fn set_mem_8(&mut self, segment: SegmentReg, offset: u16, value: u8);
     fn set_mem_16(&mut self, segment: SegmentReg, offset: u16, value: u16);
 
+    fn peek_mem_8(&mut self) -> u8;
+    fn peek_mem_16(&mut self) -> u16;
+
     fn read_mem_8(&mut self) -> u8;
     fn read_mem_16(&mut self) -> u16;
 
@@ -61,15 +64,23 @@ impl ExtSystem for System {
         self.mem[linear + 1] = high;
     }
 
+    fn peek_mem_8(&mut self) -> u8 {
+        self.mem_8(Cs, self.cpu.ip)
+    }
+
+    fn peek_mem_16(&mut self) -> u16 {
+        self.mem_16(Cs, self.cpu.ip)
+    }
+
     fn read_mem_8(&mut self) -> u8 {
-        let value = self.mem_8(Cs, self.cpu.ip);
+        let value = self.peek_mem_8();
         self.cpu.ip += 1;
 
         value
     }
 
     fn read_mem_16(&mut self) -> u16 {
-        let value = self.mem_16(Cs, self.cpu.ip);
+        let value = self.peek_mem_16();
         self.cpu.ip += 2;
 
         value

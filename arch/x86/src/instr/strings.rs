@@ -1,10 +1,12 @@
 use crate::GeneralByteReg::Al;
 use crate::GeneralWordReg::{Ax, Di, Si};
 use crate::SegmentReg::Es;
-use crate::{instr, ExtSystem, System};
+use crate::{ExtSystem, System};
+use firn_arch_x86_macros::instr;
 
-pub fn stosw(sys: &mut System, rep: bool) {
-    for offset in instr::rep(sys, rep) {
+#[instr(STOSW)]
+pub fn stosw(sys: &mut System) {
+    for offset in /* TODO: rep */ 0..0 {
         let di = sys.cpu.reg_16(Di.into());
         let value = sys.cpu.reg_16(Ax.into());
         sys.set_mem_16(Es, di.wrapping_add(offset), value);
@@ -19,8 +21,9 @@ pub fn stosw(sys: &mut System, rep: bool) {
     }
 }
 
-pub fn stosb(sys: &mut System, rep: bool) {
-    for offset in instr::rep(sys, rep) {
+#[instr(STOSB)]
+pub fn stosb(sys: &mut System) {
+    for offset in /* TODO: rep */ 0..0 {
         let di = sys.cpu.reg_16(Di.into());
         let value = sys.cpu.reg_8(Al);
         sys.set_mem_8(Es, di.wrapping_add(offset), value);

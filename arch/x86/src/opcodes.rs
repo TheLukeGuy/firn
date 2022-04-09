@@ -1,61 +1,62 @@
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::{instr, ExtSystem, GeneralByteReg, GeneralWordReg, Instr, SegmentReg, System};
+use crate::{instr, ExtSystem, Instr, SegmentReg, System};
+use firn_arch_x86_macros::new_instr;
 use std::io;
 use std::io::Write;
 
 fn match_opcode(sys: &mut System, opcode: u8, segment: SegmentReg, rep: bool) -> Instr {
     match opcode {
-        0x00 => Instr::new_r8_rm8(instr::arith::add_rm8_r8, sys),
-        0x03 => Instr::new_r16_rm16(instr::arith::add_r16_rm16, sys),
-        0x06 => Instr::new_basic(instr::stack::push_es),
-        0x07 => Instr::new_basic(instr::stack::pop_es),
-        0x15 => Instr::new_imm16(instr::arith::adc_ax_imm16, sys),
-        0x1e => Instr::new_basic(instr::stack::push_ds),
-        0x31 => Instr::new_r16_rm16(instr::arith::xor_rm16_r16, sys),
-        0x3c => Instr::new_imm8(instr::arith::cmp_al_imm8, sys),
-        0x3d => Instr::new_imm16(instr::arith::cmp_ax_imm16, sys),
-        opcode @ 0x50..=0x57 => Instr::new_r16(instr::stack::push_r16, reg_16(opcode)),
-        opcode @ 0x58..=0x5f => Instr::new_r16(instr::stack::pop_r16, reg_16(opcode)),
-        0x61 => Instr::new_basic(instr::stack::popa),
-        0x68 => Instr::new_imm16(instr::stack::push_imm16, sys),
-        0x6a => Instr::new_imm8(instr::stack::push_imm8, sys),
-        0x74 => Instr::new_imm8(instr::control::jz_rel8, sys),
-        0x7c => Instr::new_imm8(instr::control::jl_rel8, sys),
+        0x00 => new_instr!(opcode, instr::arith::add_rm8_r8),
+        0x03 => new_instr!(opcode, instr::arith::add_r16_rm16),
+        0x06 => new_instr!(opcode, instr::stack::push_es),
+        0x07 => new_instr!(opcode, instr::stack::pop_es),
+        0x15 => new_instr!(opcode, instr::arith::adc_ax_imm16),
+        0x1e => new_instr!(opcode, instr::stack::push_ds),
+        0x31 => new_instr!(opcode, instr::arith::xor_rm16_r16),
+        0x3c => new_instr!(opcode, instr::arith::cmp_al_imm8),
+        0x3d => new_instr!(opcode, instr::arith::cmp_ax_imm16),
+        opcode @ 0x50..=0x57 => new_instr!(opcode, instr::stack::push_r16),
+        opcode @ 0x58..=0x5f => new_instr!(opcode, instr::stack::pop_r16),
+        0x61 => new_instr!(opcode, instr::stack::popa),
+        0x68 => new_instr!(opcode, instr::stack::push_imm16),
+        0x6a => new_instr!(opcode, instr::stack::push_imm8),
+        0x74 => new_instr!(opcode, instr::control::jz_rel8),
+        0x7c => new_instr!(opcode, instr::control::jl_rel8),
         opcode @ 0x80 => match extension(sys) {
-            7 => Instr::new_rm8_imm8(instr::arith::cmp_rm8_imm8, sys),
+            7 => new_instr!(opcode, instr::arith::cmp_rm8_imm8),
 
             extension => invalid(sys, opcode, Some(extension)),
         },
         opcode @ 0x83 => match extension(sys) {
-            0 => Instr::new_rm16_imm8(instr::arith::add_rm16_imm8, sys),
+            0 => new_instr!(opcode, instr::arith::add_rm16_imm8),
 
             extension => invalid(sys, opcode, Some(extension)),
         },
-        0x88 => Instr::new_r8_rm8(instr::transfer::mov_rm8_r8, sys),
-        0x89 => Instr::new_r16_rm16(instr::transfer::mov_rm16_r16, sys),
-        0x8a => Instr::new_r8_rm8(instr::transfer::mov_r8_rm8, sys),
-        0x8b => Instr::new_r16_rm16(instr::transfer::mov_r16_rm16, sys),
-        0x8e => Instr::new_sreg_rm16(instr::transfer::mov_sreg_rm16, sys),
-        0xa0 => Instr::new_moffs8(instr::transfer::mov_al_moffs8, sys, segment),
-        0xaa => Instr::new_basic_rep(instr::strings::stosb, rep),
-        0xab => Instr::new_basic_rep(instr::strings::stosw, rep),
+        0x88 => new_instr!(opcode, instr::transfer::mov_rm8_r8),
+        0x89 => new_instr!(opcode, instr::transfer::mov_rm16_r16),
+        0x8a => new_instr!(opcode, instr::transfer::mov_r8_rm8),
+        0x8b => new_instr!(opcode, instr::transfer::mov_r16_rm16),
+        0x8e => new_instr!(opcode, instr::transfer::mov_sreg_rm16),
+        0xa0 => new_instr!(opcode, instr::transfer::mov_al_moffs8),
+        0xaa => new_instr!(opcode, instr::strings::stosb),
+        0xab => new_instr!(opcode, instr::strings::stosw),
         opcode @ 0xb0..=0xb7 => {
-            Instr::new_r8_imm8(instr::transfer::mov_r8_imm8, sys, reg_8(opcode))
+            new_instr!(opcode, instr::transfer::mov_r8_imm8)
         }
         opcode @ 0xb8..=0xbf => {
-            Instr::new_r16_imm16(instr::transfer::mov_r16_imm16, sys, reg_16(opcode))
+            new_instr!(opcode, instr::transfer::mov_r16_imm16)
         }
-        0xc3 => Instr::new_basic(instr::control::ret),
-        0xc4 => Instr::new_r16_m16(instr::transfer::les_r16_m16_16, sys),
-        0xc8 => Instr::new_imm16_imm8(instr::control::enter_imm16_imm8, sys),
-        0xe3 => Instr::new_imm8(instr::control::jcxz_rel8, sys),
-        0xe4 => Instr::new_imm8(instr::ports::in_al_imm8, sys),
-        0xe6 => Instr::new_imm8(instr::ports::out_imm8_al, sys),
-        0xe8 => Instr::new_imm16(instr::control::call_rel16, sys),
-        0xea => Instr::new_ptr16_16(instr::control::jmp_ptr16_16, sys),
-        0xec => Instr::new_basic(instr::ports::in_al_dx),
-        0xfa => Instr::new_basic(instr::flags::cli),
-        0xfc => Instr::new_basic(instr::flags::cld),
+        0xc3 => new_instr!(opcode, instr::control::ret),
+        0xc4 => new_instr!(opcode, instr::transfer::les_r16_m16_16),
+        0xc8 => new_instr!(opcode, instr::control::enter_imm16_imm8),
+        0xe3 => new_instr!(opcode, instr::control::jcxz_rel8),
+        0xe4 => new_instr!(opcode, instr::ports::in_al_imm8),
+        0xe6 => new_instr!(opcode, instr::ports::out_imm8_al),
+        0xe8 => new_instr!(opcode, instr::control::call_rel16),
+        0xea => new_instr!(opcode, instr::control::jmp_ptr16_16),
+        0xec => new_instr!(opcode, instr::ports::in_al_dx),
+        0xfa => new_instr!(opcode, instr::flags::cli),
+        0xfc => new_instr!(opcode, instr::flags::cld),
 
         opcode => invalid(sys, opcode, None),
     }
@@ -88,7 +89,7 @@ pub fn decode(sys: &mut System) -> Instr {
 }
 
 fn extension(sys: &mut System) -> u8 {
-    (sys.read_mem_8() / 0o10) % 0o10
+    (sys.peek_mem_8() / 0o10) % 0o10
 }
 
 fn invalid(sys: &mut System, opcode: u8, extension: Option<u8>) -> ! {
@@ -105,14 +106,4 @@ fn invalid(sys: &mut System, opcode: u8, extension: Option<u8>) -> ! {
             )
         }
     }
-}
-
-fn reg_8(opcode: u8) -> GeneralByteReg {
-    let reg = opcode % 0o10;
-    GeneralByteReg::from_u8(reg).expect("invalid byte-sized register in opcode")
-}
-
-fn reg_16(opcode: u8) -> GeneralWordReg {
-    let reg = opcode % 0o10;
-    GeneralWordReg::from_u8(reg).expect("invalid word-sized register in opcode")
 }
