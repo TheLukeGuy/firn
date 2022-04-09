@@ -10,6 +10,7 @@ members = [
     "desktop",
 
     "arch/x86",
+    "arch/x86/macros"
 ]
 
 [dependencies]
