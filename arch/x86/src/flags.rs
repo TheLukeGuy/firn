@@ -25,6 +25,64 @@ impl Flags {
         }
     }
 
+    pub fn get_8(&self) -> u8 {
+        let mut value = 0;
+
+        if self.carry {
+            value |= 0x001;
+        }
+        if self.parity {
+            value |= 0x004;
+        }
+        if self.adjust {
+            value |= 0x010;
+        }
+        if self.zero {
+            value |= 0x040;
+        }
+        if self.sign {
+            value |= 0x080;
+        }
+
+        value
+    }
+
+    pub fn get_16(&self) -> u16 {
+        let mut value = self.get_8() as u16;
+
+        if self.trap {
+            value |= 0x100;
+        }
+        if self.interrupt {
+            value |= 0x200;
+        }
+        if self.direction {
+            value |= 0x400;
+        }
+        if self.overflow {
+            value |= 0x800;
+        }
+
+        value
+    }
+
+    pub fn set_8(&mut self, value: u8) {
+        self.carry = value & 0x001 != 0;
+        self.parity = value & 0x004 != 0;
+        self.adjust = value & 0x010 != 0;
+        self.zero = value & 0x040 != 0;
+        self.sign = value & 0x080 != 0;
+    }
+
+    pub fn set_16(&mut self, value: u16) {
+        self.set_8(value as u8);
+
+        self.trap = value & 0x100 != 0;
+        self.interrupt = value & 0x200 != 0;
+        self.direction = value & 0x400 != 0;
+        self.overflow = value & 0x800 != 0;
+    }
+
     pub fn set_parity_from_u8(&mut self, value: u8) {
         self.parity = value.count_ones() % 2 == 0;
     }
