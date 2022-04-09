@@ -21,6 +21,7 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0x68 => new_instr!(opcode, prefixes, instr::stack::push_imm16),
         0x6a => new_instr!(opcode, prefixes, instr::stack::push_imm8),
         0x74 => new_instr!(opcode, prefixes, instr::control::jz_rel8),
+        0x75 => new_instr!(opcode, prefixes, instr::control::jnz_rel8),
         0x7c => new_instr!(opcode, prefixes, instr::control::jl_rel8),
         opcode @ 0x80 => match extension(sys) {
             7 => new_instr!(opcode, prefixes, instr::arith::cmp_rm8_imm8),
@@ -36,6 +37,7 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0x89 => new_instr!(opcode, prefixes, instr::transfer::mov_rm16_r16),
         0x8a => new_instr!(opcode, prefixes, instr::transfer::mov_r8_rm8),
         0x8b => new_instr!(opcode, prefixes, instr::transfer::mov_r16_rm16),
+        0x8c => new_instr!(opcode, prefixes, instr::transfer::mov_rm16_sreg),
         0x8e => new_instr!(opcode, prefixes, instr::transfer::mov_sreg_rm16),
         0xa0 => new_instr!(opcode, prefixes, instr::transfer::mov_al_moffs8),
         0xaa => new_instr!(opcode, prefixes, instr::strings::stosb),

@@ -60,3 +60,9 @@ pub fn mov_r8_rm8(sys: &mut System, reg: GeneralByteReg, rm: RegMem) {
     let value = rm.get_8(sys);
     sys.cpu.set_reg_8(reg, value);
 }
+
+#[instr(MOV r/m16, Sreg)]
+pub fn mov_rm16_sreg(sys: &mut System, rm: RegMem, reg: SegmentReg) {
+    let value = sys.cpu.reg_16(reg.into());
+    rm.set_16(sys, value);
+}

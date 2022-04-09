@@ -58,3 +58,10 @@ pub fn jl_rel8(sys: &mut System, rel: u8) {
         sys.cpu.ip += rel as u16;
     }
 }
+
+#[instr(JNZ rel8)]
+pub fn jnz_rel8(sys: &mut System, rel: u8) {
+    if !sys.cpu.flags.zero {
+        sys.cpu.ip += rel as u16;
+    }
+}
