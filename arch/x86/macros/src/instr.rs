@@ -14,7 +14,12 @@ enum Operand {
 
     #[strum(serialize = "imm8", serialize = "rel8")]
     Imm8,
-    #[strum(serialize = "imm16", serialize = "rel16")]
+    #[strum(
+        serialize = "imm16",
+        serialize = "rel16",
+        serialize = "moffs8",
+        serialize = "moffs16"
+    )]
     Imm16,
 
     R8,

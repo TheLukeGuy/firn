@@ -1,6 +1,8 @@
 use crate::GeneralByteReg::Al;
 use crate::SegmentReg::Es;
-use crate::{ExtSystem, GeneralByteReg, GeneralWordReg, RegMem, RmPtr, SegmentReg, System};
+use crate::{
+    ExtSystem, GeneralByteReg, GeneralWordReg, Prefixes, RegMem, RmPtr, SegmentReg, System,
+};
 use firn_arch_x86_macros::instr;
 
 #[instr(MOV r8, imm8)]
@@ -9,8 +11,8 @@ pub fn mov_r8_imm8(sys: &mut System, reg: GeneralByteReg, imm: u8) {
 }
 
 #[instr(MOV AL, moffs8)]
-pub fn mov_al_moffs8(sys: &mut System, segment: SegmentReg, offset: u16) {
-    let value = sys.mem_8(segment, offset);
+pub fn mov_al_moffs8(sys: &mut System, offset: u16, prefixes: &Prefixes) {
+    let value = sys.mem_8(prefixes.segment, offset);
     sys.cpu.set_reg_8(Al, value);
 }
 
