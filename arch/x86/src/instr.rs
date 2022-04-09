@@ -5,6 +5,7 @@ use std::fmt::{Debug, Formatter};
 use std::ops::Range;
 
 pub mod arith;
+pub mod conditionals;
 pub mod control;
 pub mod flags;
 pub mod ports;

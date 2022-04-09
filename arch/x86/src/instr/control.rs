@@ -9,13 +9,6 @@ pub fn jmp_ptr16_16(sys: &mut System, offset: u16, segment: u16) {
     sys.cpu.ip = offset;
 }
 
-#[instr(JZ rel8)]
-pub fn jz_rel8(sys: &mut System, rel: u8) {
-    if sys.cpu.flags.zero {
-        sys.cpu.ip += rel as u16;
-    }
-}
-
 #[instr(ENTER imm16, imm8)]
 pub fn enter_imm16_imm8(sys: &mut System, first: u16, second: u8) {
     sys.push_reg_16(Bp.into());
@@ -46,22 +39,9 @@ pub fn ret(sys: &mut System) {
 }
 
 #[instr(JCXZ rel8)]
-pub fn jcxz_rel8(sys: &mut System, rel: u8) {
-    if sys.cpu.reg_16(Cx.into()) == 0 {
-        sys.cpu.ip += rel as u16;
-    }
-}
-
-#[instr(JL rel8)]
-pub fn jl_rel8(sys: &mut System, rel: u8) {
-    if sys.cpu.flags.sign != sys.cpu.flags.overflow {
-        sys.cpu.ip += rel as u16;
-    }
-}
-
-#[instr(JNZ rel8)]
-pub fn jnz_rel8(sys: &mut System, rel: u8) {
-    if !sys.cpu.flags.zero {
+pub fn jcxz(sys: &mut System, rel: u8) {
+    let value = sys.cpu.reg_16(Cx.into());
+    if value == 0 {
         sys.cpu.ip += rel as u16;
     }
 }
