@@ -39,7 +39,7 @@ pub fn ret(sys: &mut System) {
 }
 
 #[instr(JCXZ rel8)]
-pub fn jcxz(sys: &mut System, rel: u8) {
+pub fn jcxz_rel8(sys: &mut System, rel: u8) {
     let value = sys.cpu.reg_16(Cx.into());
     if value == 0 {
         sys.cpu.ip += rel as u16;

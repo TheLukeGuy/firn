@@ -20,22 +20,22 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0x61 => new_instr!(opcode, prefixes, instr::stack::popa),
         0x68 => new_instr!(opcode, prefixes, instr::stack::push_imm16),
         0x6a => new_instr!(opcode, prefixes, instr::stack::push_imm8),
-        0x70 => new_instr!(opcode, prefixes, instr::conditionals::jo),
-        0x71 => new_instr!(opcode, prefixes, instr::conditionals::jno),
-        0x72 => new_instr!(opcode, prefixes, instr::conditionals::jc),
-        0x73 => new_instr!(opcode, prefixes, instr::conditionals::jnc),
-        0x74 => new_instr!(opcode, prefixes, instr::conditionals::jz),
-        0x75 => new_instr!(opcode, prefixes, instr::conditionals::jnz),
-        0x76 => new_instr!(opcode, prefixes, instr::conditionals::jbe),
-        0x77 => new_instr!(opcode, prefixes, instr::conditionals::ja),
-        0x78 => new_instr!(opcode, prefixes, instr::conditionals::js),
-        0x79 => new_instr!(opcode, prefixes, instr::conditionals::jns),
-        0x7a => new_instr!(opcode, prefixes, instr::conditionals::jp),
-        0x7b => new_instr!(opcode, prefixes, instr::conditionals::jnp),
-        0x7c => new_instr!(opcode, prefixes, instr::conditionals::jl),
-        0x7d => new_instr!(opcode, prefixes, instr::conditionals::jge),
-        0x7e => new_instr!(opcode, prefixes, instr::conditionals::jle),
-        0x7f => new_instr!(opcode, prefixes, instr::conditionals::jg),
+        0x70 => new_instr!(opcode, prefixes, instr::conditionals::jo_rel8),
+        0x71 => new_instr!(opcode, prefixes, instr::conditionals::jno_rel8),
+        0x72 => new_instr!(opcode, prefixes, instr::conditionals::jc_rel8),
+        0x73 => new_instr!(opcode, prefixes, instr::conditionals::jnc_rel8),
+        0x74 => new_instr!(opcode, prefixes, instr::conditionals::jz_rel8),
+        0x75 => new_instr!(opcode, prefixes, instr::conditionals::jnz_rel8),
+        0x76 => new_instr!(opcode, prefixes, instr::conditionals::jbe_rel8),
+        0x77 => new_instr!(opcode, prefixes, instr::conditionals::ja_rel8),
+        0x78 => new_instr!(opcode, prefixes, instr::conditionals::js_rel8),
+        0x79 => new_instr!(opcode, prefixes, instr::conditionals::jns_rel8),
+        0x7a => new_instr!(opcode, prefixes, instr::conditionals::jp_rel8),
+        0x7b => new_instr!(opcode, prefixes, instr::conditionals::jnp_rel8),
+        0x7c => new_instr!(opcode, prefixes, instr::conditionals::jl_rel8),
+        0x7d => new_instr!(opcode, prefixes, instr::conditionals::jge_rel8),
+        0x7e => new_instr!(opcode, prefixes, instr::conditionals::jle_rel8),
+        0x7f => new_instr!(opcode, prefixes, instr::conditionals::jg_rel8),
         opcode @ 0x80 => match extension(sys) {
             7 => new_instr!(opcode, prefixes, instr::arith::cmp_rm8_imm8),
 
@@ -68,7 +68,7 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0xc3 => new_instr!(opcode, prefixes, instr::control::ret),
         0xc4 => new_instr!(opcode, prefixes, instr::transfer::les_r16_m16_16),
         0xc8 => new_instr!(opcode, prefixes, instr::control::enter_imm16_imm8),
-        0xe3 => new_instr!(opcode, prefixes, instr::control::jcxz),
+        0xe3 => new_instr!(opcode, prefixes, instr::control::jcxz_rel8),
         0xe4 => new_instr!(opcode, prefixes, instr::ports::in_al_imm8),
         0xe5 => new_instr!(opcode, prefixes, instr::ports::in_ax_imm8),
         0xe6 => new_instr!(opcode, prefixes, instr::ports::out_imm8_al),
@@ -99,12 +99,7 @@ pub fn decode(sys: &mut System) -> Instr {
             0x2e => prefixes.segment = Cs,
             0x36 => prefixes.segment = Ss,
             0x3e => prefixes.segment = Ds,
-            0xf3 => {
-                print!("[REP] ");
-                io::stdout().flush().unwrap();
-
-                prefixes.rep = true;
-            }
+            0xf3 => prefixes.rep = true,
             opcode => {
                 print!("[{:#04x}] ", opcode);
                 io::stdout().flush().unwrap();
