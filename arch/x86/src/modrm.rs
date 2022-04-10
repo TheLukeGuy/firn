@@ -26,6 +26,23 @@ pub struct RmPtr {
 }
 
 impl RmPtr {
+    pub fn address(&self, sys: &System) -> (SegmentReg, u16) {
+        let mut offset: u16 = 0;
+
+        for reg in [self.first_reg, self.second_reg].into_iter().flatten() {
+            let value = sys.cpu.reg_16(reg.into());
+            offset = offset.wrapping_add(value);
+        }
+
+        let displacement = match self.displacement {
+            Some(Displacement::SignedByte(displacement)) => displacement as u16,
+            Some(Displacement::UnsignedWord(displacement)) => displacement,
+            None => 0,
+        };
+
+        (self.segment, offset.wrapping_add(displacement))
+    }
+
     pub fn get_8(&self, sys: &System) -> u8 {
         let (segment, offset) = self.address(sys);
         sys.mem_8(segment, offset)
@@ -52,23 +69,6 @@ impl RmPtr {
         let offset = sys.mem_16(original_segment, original_offset + 2);
 
         (segment, offset)
-    }
-
-    fn address(&self, sys: &System) -> (SegmentReg, u16) {
-        let mut offset: u16 = 0;
-
-        for reg in [self.first_reg, self.second_reg].into_iter().flatten() {
-            let value = sys.cpu.reg_16(reg.into());
-            offset = offset.wrapping_add(value);
-        }
-
-        let displacement = match self.displacement {
-            Some(Displacement::SignedByte(displacement)) => displacement as u16,
-            Some(Displacement::UnsignedWord(displacement)) => displacement,
-            None => 0,
-        };
-
-        (self.segment, offset.wrapping_add(displacement))
     }
 }
 
