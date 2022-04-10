@@ -26,6 +26,14 @@ pub struct RmPtr {
 }
 
 impl RmPtr {
+    pub fn full_address(&self, sys: &System) -> (u16, u16) {
+        let (original_segment, original_offset) = self.address(sys);
+        let segment = sys.mem_16(original_segment, original_offset);
+        let offset = sys.mem_16(original_segment, original_offset + 2);
+
+        (segment, offset)
+    }
+
     pub fn address(&self, sys: &System) -> (SegmentReg, u16) {
         let mut offset: u16 = 0;
 

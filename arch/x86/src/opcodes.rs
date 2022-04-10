@@ -52,6 +52,7 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0x8b => new_instr!(opcode, prefixes, instr::transfer::mov_r16_rm16),
         0x8c => new_instr!(opcode, prefixes, instr::transfer::mov_rm16_sreg),
         0x8e => new_instr!(opcode, prefixes, instr::transfer::mov_sreg_rm16),
+        0x9a => new_instr!(opcode, prefixes, instr::control::call_ptr16_16),
         0x9c => new_instr!(opcode, prefixes, instr::flags::pushf),
         0x9d => new_instr!(opcode, prefixes, instr::flags::popf),
         0x9e => new_instr!(opcode, prefixes, instr::flags::sahf),
@@ -59,22 +60,27 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0xa0 => new_instr!(opcode, prefixes, instr::transfer::mov_al_moffs8),
         0xaa => new_instr!(opcode, prefixes, instr::strings::stosb),
         0xab => new_instr!(opcode, prefixes, instr::strings::stosw),
-        opcode @ 0xb0..=0xb7 => {
-            new_instr!(opcode, prefixes, instr::transfer::mov_r8_imm8)
-        }
-        opcode @ 0xb8..=0xbf => {
-            new_instr!(opcode, prefixes, instr::transfer::mov_r16_imm16)
-        }
-        0xc3 => new_instr!(opcode, prefixes, instr::control::ret),
+        opcode @ 0xb0..=0xb7 => new_instr!(opcode, prefixes, instr::transfer::mov_r8_imm8),
+        opcode @ 0xb8..=0xbf => new_instr!(opcode, prefixes, instr::transfer::mov_r16_imm16),
+        0xc2 => new_instr!(opcode, prefixes, instr::control::ret_imm16_near),
+        0xc3 => new_instr!(opcode, prefixes, instr::control::ret_near),
         0xc4 => new_instr!(opcode, prefixes, instr::transfer::les_r16_m16_16),
         0xc8 => new_instr!(opcode, prefixes, instr::control::enter_imm16_imm8),
+        0xc9 => new_instr!(opcode, prefixes, instr::control::leave),
+        0xca => new_instr!(opcode, prefixes, instr::control::ret_imm16_far),
+        0xcb => new_instr!(opcode, prefixes, instr::control::ret_far),
+        0xe0 => new_instr!(opcode, prefixes, instr::control::loopne_rel8),
+        0xe1 => new_instr!(opcode, prefixes, instr::control::loope_rel8),
+        0xe2 => new_instr!(opcode, prefixes, instr::control::loop_rel8),
         0xe3 => new_instr!(opcode, prefixes, instr::control::jcxz_rel8),
         0xe4 => new_instr!(opcode, prefixes, instr::ports::in_al_imm8),
         0xe5 => new_instr!(opcode, prefixes, instr::ports::in_ax_imm8),
         0xe6 => new_instr!(opcode, prefixes, instr::ports::out_imm8_al),
         0xe7 => new_instr!(opcode, prefixes, instr::ports::out_imm8_ax),
         0xe8 => new_instr!(opcode, prefixes, instr::control::call_rel16),
+        0xe9 => new_instr!(opcode, prefixes, instr::control::jmp_rel16),
         0xea => new_instr!(opcode, prefixes, instr::control::jmp_ptr16_16),
+        0xeb => new_instr!(opcode, prefixes, instr::control::jmp_rel8),
         0xec => new_instr!(opcode, prefixes, instr::ports::in_al_dx),
         0xed => new_instr!(opcode, prefixes, instr::ports::in_ax_dx),
         0xee => new_instr!(opcode, prefixes, instr::ports::out_dx_al),
@@ -86,6 +92,14 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0xfb => new_instr!(opcode, prefixes, instr::flags::sti),
         0xfc => new_instr!(opcode, prefixes, instr::flags::cld),
         0xfd => new_instr!(opcode, prefixes, instr::flags::std),
+        opcode @ 0xff => match extension(sys) {
+            2 => new_instr!(opcode, prefixes, instr::control::call_rm16),
+            3 => new_instr!(opcode, prefixes, instr::control::call_m16_16),
+            4 => new_instr!(opcode, prefixes, instr::control::jmp_rm16),
+            5 => new_instr!(opcode, prefixes, instr::control::jmp_m16_16),
+
+            extension => invalid(sys, opcode, Some(extension)),
+        },
 
         opcode => invalid(sys, opcode, None),
     }

@@ -1,7 +1,61 @@
 use crate::GeneralWordReg::{Bp, Cx, Sp};
 use crate::SegmentReg::Cs;
-use crate::{ExtSystem, System};
+use crate::{ExtSystem, RegMem, RmPtr, System};
 use firn_arch_x86_macros::instr;
+
+#[instr(JCXZ rel8)]
+pub fn jcxz_rel8(sys: &mut System, rel: u8) {
+    let value = sys.cpu.reg_16(Cx.into());
+    if value == 0 {
+        sys.cpu.ip += rel as u16;
+    }
+}
+
+#[instr(LOOP rel8)]
+pub fn loop_rel8(sys: &mut System, rel: u8) {
+    let value = sys.cpu.reg_16(Cx.into()) - 1;
+    sys.cpu.set_reg_16(Cx.into(), value);
+
+    if value != 0 {
+        sys.cpu.ip += rel as u16;
+    }
+}
+
+#[instr(LOOPE rel8)]
+pub fn loope_rel8(sys: &mut System, rel: u8) {
+    let value = sys.cpu.reg_16(Cx.into()) - 1;
+    sys.cpu.set_reg_16(Cx.into(), value);
+
+    if value != 0 && sys.cpu.flags.zero {
+        sys.cpu.ip += rel as u16;
+    }
+}
+
+#[instr(LOOPNE rel8)]
+pub fn loopne_rel8(sys: &mut System, rel: u8) {
+    let value = sys.cpu.reg_16(Cx.into()) - 1;
+    sys.cpu.set_reg_16(Cx.into(), value);
+
+    if value != 0 && !sys.cpu.flags.zero {
+        sys.cpu.ip += rel as u16;
+    }
+}
+
+#[instr(JMP rel8)]
+pub fn jmp_rel8(sys: &mut System, rel: u8) {
+    sys.cpu.ip += rel as u16;
+}
+
+#[instr(JMP rel16)]
+pub fn jmp_rel16(sys: &mut System, rel: u16) {
+    sys.cpu.ip += rel;
+}
+
+#[instr(JMP r/m16)]
+pub fn jmp_rm16(sys: &mut System, rm: RegMem) {
+    let value = rm.get_16(sys);
+    sys.cpu.ip = value;
+}
 
 #[instr(JMP ptr16:16)]
 pub fn jmp_ptr16_16(sys: &mut System, offset: u16, segment: u16) {
@@ -9,22 +63,11 @@ pub fn jmp_ptr16_16(sys: &mut System, offset: u16, segment: u16) {
     sys.cpu.ip = offset;
 }
 
-#[instr(ENTER imm16, imm8)]
-pub fn enter_imm16_imm8(sys: &mut System, first: u16, second: u8) {
-    sys.push_reg_16(Bp.into());
-
-    let frame_temp = sys.cpu.reg_16(Sp.into());
-    if second > 0 {
-        for _ in 1..second {
-            sys.cpu.dec_reg_16(Bp.into(), 2);
-            sys.push_reg_16(Bp.into());
-        }
-        sys.push_16(frame_temp);
-    }
-
-    sys.cpu.set_reg_16(Bp.into(), frame_temp);
-    // TODO: Ensure this is correct
-    sys.cpu.dec_reg_16(Sp.into(), first);
+#[instr(JMP m16:16)]
+pub fn jmp_m16_16(sys: &mut System, ptr: RmPtr) {
+    let (segment, offset) = ptr.full_address(sys);
+    sys.cpu.set_reg_16(Cs.into(), segment);
+    sys.cpu.ip = offset;
 }
 
 #[instr(CALL rel16)]
@@ -33,15 +76,79 @@ pub fn call_rel16(sys: &mut System, imm: u16) {
     sys.cpu.ip = sys.cpu.ip.wrapping_add(imm);
 }
 
+#[instr(CALL r/m16)]
+pub fn call_rm16(sys: &mut System, rm: RegMem) {
+    sys.push_16(sys.cpu.ip);
+    sys.cpu.ip = rm.get_16(sys);
+}
+
+#[instr(CALL ptr16:16)]
+pub fn call_ptr16_16(sys: &mut System, offset: u16, segment: u16) {
+    sys.push_16(sys.cpu.ip);
+    sys.push_reg_16(Cs.into());
+
+    sys.cpu.ip = offset;
+    sys.cpu.set_reg_16(Cs.into(), segment);
+}
+
+#[instr(CALL m16:16)]
+pub fn call_m16_16(sys: &mut System, ptr: RmPtr) {
+    sys.push_16(sys.cpu.ip);
+    sys.push_reg_16(Cs.into());
+
+    let (segment, offset) = ptr.full_address(sys);
+    sys.cpu.ip = offset;
+    sys.cpu.set_reg_16(Cs.into(), segment);
+}
+
 #[instr(RET)]
-pub fn ret(sys: &mut System) {
+pub fn ret_near(sys: &mut System) {
     sys.cpu.ip = sys.pop_16();
 }
 
-#[instr(JCXZ rel8)]
-pub fn jcxz_rel8(sys: &mut System, rel: u8) {
-    let value = sys.cpu.reg_16(Cx.into());
-    if value == 0 {
-        sys.cpu.ip += rel as u16;
+#[instr(RET)]
+pub fn ret_far(sys: &mut System) {
+    sys.cpu.ip = sys.pop_16();
+    let cs = sys.pop_16();
+    sys.cpu.set_reg_16(Cs.into(), cs);
+}
+
+#[instr(RET imm16)]
+pub fn ret_imm16_near(sys: &mut System, imm: u16) {
+    sys.cpu.ip = sys.pop_16();
+    sys.cpu.inc_reg_16(Sp.into(), imm);
+}
+
+#[instr(RET imm16)]
+pub fn ret_imm16_far(sys: &mut System, imm: u16) {
+    sys.cpu.ip = sys.pop_16();
+    let cs = sys.pop_16();
+    sys.cpu.set_reg_16(Cs.into(), cs);
+    sys.cpu.inc_reg_16(Sp.into(), imm);
+}
+
+#[instr(ENTER imm16, imm8)]
+pub fn enter_imm16_imm8(sys: &mut System, first: u16, second: u8) {
+    let level = second % 32;
+    sys.push_reg_16(Bp.into());
+
+    let frame_ptr = sys.cpu.reg_16(Sp.into());
+    if level > 0 {
+        for _ in 1..level {
+            sys.cpu.dec_reg_16(Bp.into(), 2);
+            sys.push_reg_16(Bp.into());
+        }
+        sys.push_16(frame_ptr);
     }
+
+    sys.cpu.set_reg_16(Bp.into(), frame_ptr);
+    sys.cpu.dec_reg_16(Sp.into(), first);
+}
+
+#[instr(LEAVE)]
+pub fn leave(sys: &mut System) {
+    let new_sp = sys.cpu.reg_16(Bp.into());
+    sys.cpu.set_reg_16(Sp.into(), new_sp);
+    let new_bp = sys.pop_16();
+    sys.cpu.set_reg_16(Bp.into(), new_bp);
 }
