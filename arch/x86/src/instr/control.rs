@@ -7,48 +7,48 @@ use firn_arch_x86_macros::instr;
 pub fn jcxz_rel8(sys: &mut System, rel: u8) {
     let value = sys.cpu.reg_16(Cx.into());
     if value == 0 {
-        sys.cpu.ip += rel as u16;
+        sys.cpu.inc_ip_8(rel);
     }
 }
 
 #[instr(LOOP rel8)]
 pub fn loop_rel8(sys: &mut System, rel: u8) {
-    let value = sys.cpu.reg_16(Cx.into()) - 1;
+    let value = sys.cpu.reg_16(Cx.into()).wrapping_sub(1);
     sys.cpu.set_reg_16(Cx.into(), value);
 
     if value != 0 {
-        sys.cpu.ip += rel as u16;
+        sys.cpu.inc_ip_8(rel);
     }
 }
 
 #[instr(LOOPE rel8)]
 pub fn loope_rel8(sys: &mut System, rel: u8) {
-    let value = sys.cpu.reg_16(Cx.into()) - 1;
+    let value = sys.cpu.reg_16(Cx.into()).wrapping_sub(1);
     sys.cpu.set_reg_16(Cx.into(), value);
 
     if value != 0 && sys.cpu.flags.zero {
-        sys.cpu.ip += rel as u16;
+        sys.cpu.inc_ip_8(rel);
     }
 }
 
 #[instr(LOOPNE rel8)]
 pub fn loopne_rel8(sys: &mut System, rel: u8) {
-    let value = sys.cpu.reg_16(Cx.into()) - 1;
+    let value = sys.cpu.reg_16(Cx.into()).wrapping_sub(1);
     sys.cpu.set_reg_16(Cx.into(), value);
 
     if value != 0 && !sys.cpu.flags.zero {
-        sys.cpu.ip += rel as u16;
+        sys.cpu.inc_ip_8(rel);
     }
 }
 
 #[instr(JMP rel8)]
 pub fn jmp_rel8(sys: &mut System, rel: u8) {
-    sys.cpu.ip += rel as u16;
+    sys.cpu.inc_ip_8(rel);
 }
 
 #[instr(JMP rel16)]
 pub fn jmp_rel16(sys: &mut System, rel: u16) {
-    sys.cpu.ip += rel;
+    sys.cpu.inc_ip_16(rel);
 }
 
 #[instr(JMP r/m16)]
@@ -73,7 +73,7 @@ pub fn jmp_m16_16(sys: &mut System, ptr: RmPtr) {
 #[instr(CALL rel16)]
 pub fn call_rel16(sys: &mut System, imm: u16) {
     sys.push_16(sys.cpu.ip);
-    sys.cpu.ip = sys.cpu.ip.wrapping_add(imm);
+    sys.cpu.inc_ip_16(imm);
 }
 
 #[instr(CALL r/m16)]

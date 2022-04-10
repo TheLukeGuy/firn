@@ -86,6 +86,14 @@ impl Cpu {
         let old = self.reg_16(reg);
         self.set_reg_16(reg, old.wrapping_sub(amount));
     }
+
+    pub fn inc_ip_8(&mut self, amount: u8) {
+        self.ip = self.ip.wrapping_add(amount as u16);
+    }
+
+    pub fn inc_ip_16(&mut self, amount: u16) {
+        self.ip = self.ip.wrapping_add(amount);
+    }
 }
 
 impl cpu::Cpu for Cpu {

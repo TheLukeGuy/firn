@@ -33,7 +33,7 @@ impl ExtSystem for System {
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
         let segment = self.cpu.reg_16(segment.into()) as usize;
 
-        (segment << 4) + offset as usize
+        (segment << 4).wrapping_add(offset as usize)
     }
 
     fn mem_8(&self, segment: SegmentReg, offset: u16) -> u8 {
@@ -46,7 +46,7 @@ impl ExtSystem for System {
         let linear = self.linear_mem(segment, offset);
 
         let low = self.mem[linear];
-        let high = self.mem[linear + 1];
+        let high = self.mem[linear.wrapping_add(1)];
 
         u16::from_le_bytes([low, high])
     }
@@ -61,7 +61,7 @@ impl ExtSystem for System {
 
         let [low, high] = value.to_le_bytes();
         self.mem[linear] = low;
-        self.mem[linear + 1] = high;
+        self.mem[linear.wrapping_add(1)] = high;
     }
 
     fn peek_mem_8(&mut self) -> u8 {
@@ -74,26 +74,26 @@ impl ExtSystem for System {
 
     fn read_mem_8(&mut self) -> u8 {
         let value = self.peek_mem_8();
-        self.cpu.ip += 1;
+        self.cpu.inc_ip_16(1);
 
         value
     }
 
     fn read_mem_16(&mut self) -> u16 {
         let value = self.peek_mem_16();
-        self.cpu.ip += 2;
+        self.cpu.inc_ip_16(2);
 
         value
     }
 
     fn push_8(&mut self, value: u8) {
-        let sp = self.cpu.reg_16(Sp.into()) - 1;
+        let sp = self.cpu.reg_16(Sp.into()).wrapping_sub(1);
         self.cpu.set_reg_16(Sp.into(), sp);
         self.set_mem_8(Ss, sp, value);
     }
 
     fn push_16(&mut self, value: u16) {
-        let sp = self.cpu.reg_16(Sp.into()) - 2;
+        let sp = self.cpu.reg_16(Sp.into()).wrapping_sub(2);
         self.cpu.set_reg_16(Sp.into(), sp);
         self.set_mem_16(Ss, sp, value);
     }
