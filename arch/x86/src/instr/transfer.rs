@@ -1,8 +1,5 @@
 use crate::GeneralByteReg::Al;
-use crate::SegmentReg::Es;
-use crate::{
-    ExtSystem, GeneralByteReg, GeneralWordReg, Prefixes, RegMem, RmPtr, SegmentReg, System,
-};
+use crate::{ExtSystem, GeneralByteReg, GeneralWordReg, Prefixes, RegMem, SegmentReg, System};
 use firn_arch_x86_macros::instr;
 
 #[instr(MOV r8, imm8)]
@@ -43,16 +40,6 @@ pub fn mov_sreg_rm16(sys: &mut System, reg: SegmentReg, rm: RegMem) {
 pub fn mov_r16_rm16(sys: &mut System, reg: GeneralWordReg, rm: RegMem) {
     let value = rm.get_16(sys);
     sys.cpu.set_reg_16(reg.into(), value);
-}
-
-#[instr(LES r16, m16:16)]
-pub fn les_r16_m16_16(sys: &mut System, reg: GeneralWordReg, mem: RmPtr) {
-    // TODO: Ensure this is correct
-    let (instr_segment, offset_addr) = mem.address(sys);
-    let offset = sys.mem_16(instr_segment, offset_addr);
-    let segment = sys.mem_16(instr_segment, offset_addr + 2);
-    sys.cpu.set_reg_16(reg.into(), offset);
-    sys.cpu.set_reg_16(Es.into(), segment);
 }
 
 #[instr(MOV r8, r/m8)]

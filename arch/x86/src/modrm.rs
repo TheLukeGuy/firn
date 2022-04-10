@@ -26,7 +26,27 @@ pub struct RmPtr {
 }
 
 impl RmPtr {
-    pub fn full_address(&self, sys: &System) -> (u16, u16) {
+    pub fn get_8(&self, sys: &System) -> u8 {
+        let (segment, offset) = self.address(sys);
+        sys.mem_8(segment, offset)
+    }
+
+    pub fn get_16(&self, sys: &System) -> u16 {
+        let (segment, offset) = self.address(sys);
+        sys.mem_16(segment, offset)
+    }
+
+    pub fn set_8(&self, sys: &mut System, value: u8) {
+        let (segment, offset) = self.address(sys);
+        sys.set_mem_8(segment, offset, value);
+    }
+
+    pub fn set_16(&self, sys: &mut System, value: u16) {
+        let (segment, offset) = self.address(sys);
+        sys.set_mem_16(segment, offset, value);
+    }
+
+    pub fn double_address(&self, sys: &System) -> (u16, u16) {
         let (original_segment, original_offset) = self.address(sys);
         let segment = sys.mem_16(original_segment, original_offset);
         let offset = sys.mem_16(original_segment, original_offset + 2);
@@ -34,7 +54,7 @@ impl RmPtr {
         (segment, offset)
     }
 
-    pub fn address(&self, sys: &System) -> (SegmentReg, u16) {
+    fn address(&self, sys: &System) -> (SegmentReg, u16) {
         let mut offset: u16 = 0;
 
         for reg in [self.first_reg, self.second_reg].into_iter().flatten() {
@@ -65,10 +85,7 @@ impl RegMem {
                 GeneralReg::Byte(reg) => sys.cpu.reg_8(*reg),
                 _ => panic!("cannot get a byte-sized value from a non-byte-sized RM"),
             },
-            RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(sys);
-                sys.mem_8(segment, offset)
-            }
+            RegMem::Ptr(ptr) => ptr.get_8(sys),
         }
     }
 
@@ -78,10 +95,7 @@ impl RegMem {
                 GeneralReg::Word(reg) => sys.cpu.reg_16((*reg).into()),
                 _ => panic!("cannot get a word-sized value from a non-word-sized RM"),
             },
-            RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(sys);
-                sys.mem_16(segment, offset)
-            }
+            RegMem::Ptr(ptr) => ptr.get_16(sys),
         }
     }
 
@@ -91,10 +105,7 @@ impl RegMem {
                 GeneralReg::Byte(reg) => sys.cpu.set_reg_8(*reg, value),
                 _ => panic!("cannot set a byte-sized value to a non-byte-sized RM"),
             },
-            RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(sys);
-                sys.set_mem_8(segment, offset, value);
-            }
+            RegMem::Ptr(ptr) => ptr.set_8(sys, value),
         }
     }
 
@@ -104,10 +115,7 @@ impl RegMem {
                 GeneralReg::Word(reg) => sys.cpu.set_reg_16((*reg).into(), value),
                 _ => panic!("cannot set a word-sized value to a non-word-sized RM"),
             },
-            RegMem::Ptr(ptr) => {
-                let (segment, offset) = ptr.address(sys);
-                sys.set_mem_16(segment, offset, value);
-            }
+            RegMem::Ptr(ptr) => ptr.set_16(sys, value),
         }
     }
 }

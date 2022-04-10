@@ -74,7 +74,6 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         opcode @ 0xb8..=0xbf => new_instr!(opcode, prefixes, instr::transfer::mov_r16_imm16),
         0xc2 => new_instr!(opcode, prefixes, instr::control::ret_imm16_near),
         0xc3 => new_instr!(opcode, prefixes, instr::control::ret_near),
-        0xc4 => new_instr!(opcode, prefixes, instr::transfer::les_r16_m16_16),
         0xc8 => new_instr!(opcode, prefixes, instr::control::enter_imm16_imm8),
         0xc9 => new_instr!(opcode, prefixes, instr::control::leave),
         0xca => new_instr!(opcode, prefixes, instr::control::ret_imm16_far),

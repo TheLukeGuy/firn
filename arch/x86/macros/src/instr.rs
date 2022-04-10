@@ -27,13 +27,13 @@ enum Operand {
     Sreg,
 
     M8,
-    #[strum(serialize = "m16", serialize = "m16_16")]
     M16,
 
     Rm8,
     Rm16,
 
     Ptr16_16,
+    M16_16,
 }
 
 struct Instr {
@@ -99,8 +99,11 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let Instr { mnemonic, operands } = parse_macro_input!(args as Instr);
     let input = parse_macro_input!(input as ItemFn);
 
+    // TODO: Ensure ModRM decoding is correct and not wasteful
     let has_modrm_8 = operands.contains(&Operand::Rm8) || operands.contains(&Operand::M8);
-    let has_modrm_16 = operands.contains(&Operand::Rm16) || operands.contains(&Operand::M16);
+    let has_modrm_16 = operands.contains(&Operand::Rm16)
+        || operands.contains(&Operand::M16)
+        || operands.contains(&Operand::M16_16);
     let has_modrm = has_modrm_8 || has_modrm_16;
 
     let modrm_decode = if has_modrm_8 {
@@ -134,6 +137,17 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                     crate::Size::Word
                 );
             }
+        }
+    } else {
+        quote! {}
+    };
+
+    let double_address = if operands.contains(&Operand::M16_16) {
+        quote! {
+            let double_address = match modrm.reg_mem {
+                crate::RegMem::Ptr(ptr) => ptr.double_address(sys),
+                _ => panic!("expected memory pointer in ModRM byte"),
+            };
         }
     } else {
         quote! {}
@@ -187,6 +201,7 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                 quote! { crate::ExtSystem::read_mem_16(sys) },
                 quote! { crate::ExtSystem::read_mem_16(sys) },
             ],
+            Operand::M16_16 => vec![quote! { double_address.1 }, quote! { double_address.0 }],
         })
         .filter(|defs| !defs.is_empty())
         .flatten()
@@ -233,6 +248,8 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
             #input
 
             #modrm_decode
+            #double_address
+
             #(#operand_defs)*
 
             #instr_call

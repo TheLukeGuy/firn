@@ -1,6 +1,6 @@
 use crate::GeneralWordReg::{Bp, Cx, Sp};
 use crate::SegmentReg::Cs;
-use crate::{ExtSystem, RegMem, RmPtr, System};
+use crate::{ExtSystem, RegMem, System};
 use firn_arch_x86_macros::instr;
 
 #[instr(JCXZ rel8)]
@@ -64,8 +64,7 @@ pub fn jmp_ptr16_16(sys: &mut System, offset: u16, segment: u16) {
 }
 
 #[instr(JMP m16:16)]
-pub fn jmp_m16_16(sys: &mut System, ptr: RmPtr) {
-    let (segment, offset) = ptr.full_address(sys);
+pub fn jmp_m16_16(sys: &mut System, offset: u16, segment: u16) {
     sys.cpu.set_reg_16(Cs.into(), segment);
     sys.cpu.ip = offset;
 }
@@ -92,11 +91,10 @@ pub fn call_ptr16_16(sys: &mut System, offset: u16, segment: u16) {
 }
 
 #[instr(CALL m16:16)]
-pub fn call_m16_16(sys: &mut System, ptr: RmPtr) {
+pub fn call_m16_16(sys: &mut System, offset: u16, segment: u16) {
     sys.push_16(sys.cpu.ip);
     sys.push_reg_16(Cs.into());
 
-    let (segment, offset) = ptr.full_address(sys);
     sys.cpu.ip = offset;
     sys.cpu.set_reg_16(Cs.into(), segment);
 }

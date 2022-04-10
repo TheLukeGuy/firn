@@ -5,7 +5,8 @@ use firn_arch_x86_macros::instr;
 
 #[instr(PUSH m16)]
 pub fn push_m16(sys: &mut System, ptr: RmPtr) {
-    // TODO
+    let value = ptr.get_16(sys);
+    sys.push_16(value);
 }
 
 #[instr(PUSH r16)]
@@ -58,7 +59,8 @@ pub fn pusha(sys: &mut System) {
 
 #[instr(POP m16)]
 pub fn pop_m16(sys: &mut System, ptr: RmPtr) {
-    // TODO
+    let value = sys.pop_16();
+    ptr.set_16(sys, value);
 }
 
 #[instr(POP r16)]
