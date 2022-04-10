@@ -174,8 +174,8 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 
             Operand::M8 | Operand::M16 => vec![quote! {
                 match modrm.reg_mem {
-                    RegMem::Ptr(ptr) => ptr,
-                    RegMem::Reg(_) => panic!("expected memory pointer in ModRM byte"),
+                    crate::RegMem::Ptr(ptr) => ptr,
+                    crate::RegMem::Reg(_) => panic!("expected memory pointer in ModRM byte"),
                 }
             }],
 

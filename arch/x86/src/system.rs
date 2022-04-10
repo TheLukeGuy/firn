@@ -27,6 +27,9 @@ pub trait ExtSystem {
 
     fn push_reg_8(&mut self, reg: GeneralByteReg);
     fn push_reg_16(&mut self, reg: WordReg);
+
+    fn pop_reg_8(&mut self, reg: GeneralByteReg);
+    fn pop_reg_16(&mut self, reg: WordReg);
 }
 
 impl ExtSystem for System {
@@ -122,5 +125,15 @@ impl ExtSystem for System {
     fn push_reg_16(&mut self, reg: WordReg) {
         let value = self.cpu.reg_16(reg);
         self.push_16(value);
+    }
+
+    fn pop_reg_8(&mut self, reg: GeneralByteReg) {
+        let value = self.pop_8();
+        self.cpu.set_reg_8(reg, value);
+    }
+
+    fn pop_reg_16(&mut self, reg: WordReg) {
+        let value = self.pop_16();
+        self.cpu.set_reg_16(reg, value);
     }
 }
