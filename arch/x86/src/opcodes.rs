@@ -75,8 +75,6 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0xa1 => new_instr!(opcode, prefixes, instr::transfer::mov_ax_moffs16),
         0xa2 => new_instr!(opcode, prefixes, instr::transfer::mov_moffs8_al),
         0xa3 => new_instr!(opcode, prefixes, instr::transfer::mov_moffs16_ax),
-        0xaa => new_instr!(opcode, prefixes, instr::strings::stosb),
-        0xab => new_instr!(opcode, prefixes, instr::strings::stosw),
         opcode @ 0xb0..=0xb7 => new_instr!(opcode, prefixes, instr::transfer::mov_r8_imm8),
         opcode @ 0xb8..=0xbf => new_instr!(opcode, prefixes, instr::transfer::mov_r16_imm16),
         0xc2 => new_instr!(opcode, prefixes, instr::control::ret_imm16_near),
@@ -142,7 +140,9 @@ pub fn decode(sys: &mut System) -> Instr {
             0x2e => prefixes.segment = Cs,
             0x36 => prefixes.segment = Ss,
             0x3e => prefixes.segment = Ds,
-            0xf3 => prefixes.rep = true,
+            0xf0 => prefixes.lock = true,
+            0xf2 => prefixes.repne = true,
+            0xf3 => prefixes.rep_or_rep_e = true,
             opcode => {
                 print!("[{:#04x}] ", opcode);
                 io::stdout().flush().unwrap();

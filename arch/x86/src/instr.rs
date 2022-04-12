@@ -1,8 +1,6 @@
-use crate::GeneralWordReg::Cx;
 use crate::SegmentReg::Ds;
 use crate::{opcodes, SegmentReg, System};
 use std::fmt::{Debug, Formatter};
-use std::ops::Range;
 
 pub mod arith;
 pub mod conditionals;
@@ -17,8 +15,8 @@ pub mod transfer;
 pub struct Prefixes {
     pub lock: bool,
 
-    pub rep: bool,
-    pub rep_ne: bool,
+    pub rep_or_rep_e: bool,
+    pub repne: bool,
 
     pub segment: SegmentReg,
 }
@@ -28,18 +26,10 @@ impl Prefixes {
         Self {
             lock: false,
 
-            rep: false,
-            rep_ne: false,
+            rep_or_rep_e: false,
+            repne: false,
 
             segment: Ds,
-        }
-    }
-
-    pub fn rep_range(&self, sys: &System) -> Range<u16> {
-        if self.rep {
-            0..sys.cpu.reg_16(Cx.into())
-        } else {
-            0..1
         }
     }
 }
