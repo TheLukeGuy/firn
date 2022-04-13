@@ -331,6 +331,66 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    let execute_and_dec_cx = quote! {
+        #fn_call
+        sys.cpu.dec_reg_16(crate::GeneralWordReg::Cx.into(), 1);
+    };
+    let cx_not_zero = quote! {
+        sys.cpu.reg_16(crate::GeneralWordReg::Cx.into()) != 0
+    };
+
+    let mut rep_checks = Vec::new();
+    if rep {
+        rep_checks.push(quote! {
+            if prefixes.rep_or_rep_e {
+                while #cx_not_zero {
+                    #execute_and_dec_cx
+                }
+            }
+        });
+    } else if rep_e {
+        rep_checks.push(quote! {
+            if prefixes.rep_or_rep_e {
+                while #cx_not_zero {
+                    #execute_and_dec_cx
+                    if !sys.cpu.flags.zero {
+                        break;
+                    }
+                }
+            }
+        });
+    }
+    if rep_ne {
+        rep_checks.push(quote! {
+            if prefixes.rep_ne {
+                while #cx_not_zero {
+                    #execute_and_dec_cx
+                    if sys.cpu.flags.zero {
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    let fn_call = if rep_checks.is_empty() {
+        fn_call
+    } else {
+        let (first, others) = rep_checks.split_first().unwrap();
+        let mut rep_checks = vec![first.clone()];
+        rep_checks.extend(others.iter().map(|check| {
+            quote! {
+                else #check
+            }
+        }));
+
+        quote! {
+            #(#rep_checks)* else {
+                #fn_call
+            }
+        }
+    };
+
     let expanded = quote! {
         #vis fn #fn_name(sys: &mut crate::System, opcode: u8, prefixes: &crate::Prefixes) {
             #input

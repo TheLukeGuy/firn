@@ -16,7 +16,7 @@ pub struct Prefixes {
     pub lock: bool,
 
     pub rep_or_rep_e: bool,
-    pub repne: bool,
+    pub rep_ne: bool,
 
     pub segment: SegmentReg,
 }
@@ -27,7 +27,7 @@ impl Prefixes {
             lock: false,
 
             rep_or_rep_e: false,
-            repne: false,
+            rep_ne: false,
 
             segment: Ds,
         }

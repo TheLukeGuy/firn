@@ -141,7 +141,7 @@ pub fn decode(sys: &mut System) -> Instr {
             0x36 => prefixes.segment = Ss,
             0x3e => prefixes.segment = Ds,
             0xf0 => prefixes.lock = true,
-            0xf2 => prefixes.repne = true,
+            0xf2 => prefixes.rep_ne = true,
             0xf3 => prefixes.rep_or_rep_e = true,
             opcode => {
                 print!("[{:#04x}] ", opcode);
