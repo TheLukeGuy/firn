@@ -4,7 +4,7 @@ use crate::SegmentReg::{Ds, Es};
 use crate::{ExtSystem, GeneralWordReg, Prefixes, System};
 use firn_arch_x86_macros::instr;
 
-#[instr("INSB")]
+#[instr("INSB", REP)]
 pub fn insb(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
     let value = sys.port_in_8(port).unwrap_or(0);
@@ -13,7 +13,7 @@ pub fn insb(sys: &mut System) {
     increment(sys, Di, 1);
 }
 
-#[instr("INSW")]
+#[instr("INSW", REP)]
 pub fn insw(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
     let value = sys.port_in_16(port).unwrap_or(0);
@@ -22,7 +22,7 @@ pub fn insw(sys: &mut System) {
     increment(sys, Di, 2);
 }
 
-#[instr("OUTSB")]
+#[instr("OUTSB", REP)]
 pub fn outsb(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
     let value = sys.mem_reg_8(Ds, Si);
@@ -31,7 +31,7 @@ pub fn outsb(sys: &mut System) {
     increment(sys, Si, 1);
 }
 
-#[instr("OUTSW")]
+#[instr("OUTSW", REP)]
 pub fn outsw(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
     let value = sys.mem_reg_16(Ds, Si);
@@ -40,7 +40,7 @@ pub fn outsw(sys: &mut System) {
     increment(sys, Si, 2);
 }
 
-#[instr("MOVSB")]
+#[instr("MOVSB", REP)]
 pub fn movsb(sys: &mut System, prefixes: &Prefixes) {
     let value = sys.mem_reg_8(prefixes.segment, Si);
     sys.set_mem_reg_8(Es, Di, value);
@@ -49,7 +49,7 @@ pub fn movsb(sys: &mut System, prefixes: &Prefixes) {
     increment(sys, Si, 1);
 }
 
-#[instr("MOVSW")]
+#[instr("MOVSW", REP)]
 pub fn movsw(sys: &mut System, prefixes: &Prefixes) {
     let value = sys.mem_reg_16(prefixes.segment, Si);
     sys.set_mem_reg_16(Es, Di, value);
@@ -62,7 +62,7 @@ pub fn movsw(sys: &mut System, prefixes: &Prefixes) {
 // TODO: CMPSB
 // TODO: CMPSW
 
-#[instr("STOSB")]
+#[instr("STOSB", REP)]
 pub fn stosb(sys: &mut System) {
     let value = sys.cpu.reg_8(Al);
     sys.set_mem_reg_8(Es, Di, value);
@@ -70,7 +70,7 @@ pub fn stosb(sys: &mut System) {
     increment(sys, Di, 1);
 }
 
-#[instr("STOSW")]
+#[instr("STOSW", REP)]
 pub fn stosw(sys: &mut System) {
     let value = sys.cpu.reg_16(Ax.into());
     sys.set_mem_reg_16(Es, Di, value);
@@ -78,7 +78,7 @@ pub fn stosw(sys: &mut System) {
     increment(sys, Di, 2);
 }
 
-#[instr("LODSB")]
+#[instr("LODSB", REP)]
 pub fn lodsb(sys: &mut System, prefixes: &Prefixes) {
     let value = sys.mem_reg_8(prefixes.segment, Si);
     sys.cpu.set_reg_8(Al, value);
@@ -86,7 +86,7 @@ pub fn lodsb(sys: &mut System, prefixes: &Prefixes) {
     increment(sys, Si, 1);
 }
 
-#[instr("LODSW")]
+#[instr("LODSW", REP)]
 pub fn lodsw(sys: &mut System, prefixes: &Prefixes) {
     let value = sys.mem_reg_16(prefixes.segment, Si);
     sys.cpu.set_reg_16(Ax.into(), value);
