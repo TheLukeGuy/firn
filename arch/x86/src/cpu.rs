@@ -112,7 +112,7 @@ impl cpu::Cpu for Cpu {
 
         let instr = Instr::decode(sys);
         sys.cpu.decoded += 1;
-        println!("({:04}) Decoded: {}", sys.cpu.decoded, instr.meta.mnemonic);
+        println!("({}) Decoded: {}", sys.cpu.decoded, instr.meta.mnemonic);
         instr.execute(sys);
     }
 }

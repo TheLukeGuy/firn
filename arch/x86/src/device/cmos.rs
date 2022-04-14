@@ -90,6 +90,7 @@ impl Cmos {
     }
 }
 
+// TODO: Remove debug messages
 impl Cmos {
     #[io_port(0x70)]
     pub fn select_reg(&mut self, value: u8) {
@@ -102,11 +103,13 @@ impl Cmos {
 
     #[io_port(0x71)]
     pub fn reg_value(&mut self) -> u8 {
+        println!("Read from CMOS register");
         self.regs[self.selected_reg as usize]
     }
 
     #[io_port(0x71)]
     pub fn set_reg_value(&mut self, value: u8) {
+        println!("Wrote {:#x} to CMOS register", value);
         self.regs[self.selected_reg as usize] = value;
     }
 }

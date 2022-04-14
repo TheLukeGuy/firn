@@ -81,18 +81,36 @@ where
     C: Cpu,
 {
     pub fn port_in_8(&mut self, port: u16) -> Option<u8> {
-        port_handler!(self, port, In8).map(|(device, handler)| handler(device))
+        match port_handler!(self, port, In8) {
+            Some((device, handler)) => Some(handler(device)),
+            None => {
+                println!("unimplemented IO port: {:#x}", port);
+                None
+            }
+        }
     }
 
     pub fn port_in_16(&mut self, port: u16) -> Option<u16> {
-        port_handler!(self, port, In16).map(|(device, handler)| handler(device))
+        match port_handler!(self, port, In16) {
+            Some((device, handler)) => Some(handler(device)),
+            None => {
+                println!("unimplemented IO port: {:#x}", port);
+                None
+            }
+        }
     }
 
     pub fn port_out_8(&mut self, port: u16, value: u8) {
-        port_handler!(self, port, Out8).map(|(device, handler)| handler(device, value));
+        match port_handler!(self, port, Out8) {
+            Some((device, handler)) => handler(device, value),
+            None => println!("unimplemented IO port: {:#x}", port),
+        }
     }
 
     pub fn port_out_16(&mut self, port: u16, value: u16) {
-        port_handler!(self, port, Out16).map(|(device, handler)| handler(device, value));
+        match port_handler!(self, port, Out16) {
+            Some((device, handler)) => handler(device, value),
+            None => println!("unimplemented IO port: {:#x}", port),
+        }
     }
 }
