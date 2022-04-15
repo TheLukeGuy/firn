@@ -7,6 +7,7 @@ pub mod conditionals;
 pub mod control;
 pub mod flags;
 pub mod ports;
+pub mod shifts;
 pub mod stack;
 pub mod strings;
 pub mod transfer;

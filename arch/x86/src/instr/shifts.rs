@@ -1,0 +1,8 @@
+// TODO: ROL
+// TODO: ROR
+// TODO: RCL
+// TODO: RCR
+// TODO: SHL
+// TODO: SHR
+// TODO: SAL
+// TODO: SAR

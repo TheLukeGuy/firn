@@ -7,18 +7,18 @@ use std::io::Write;
 fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
     match opcode {
         0x00 => new_instr!(opcode, prefixes, instr::arith::add_rm8_r8),
+        0x01 => new_instr!(opcode, prefixes, instr::arith::add_rm16_r16),
+        0x02 => new_instr!(opcode, prefixes, instr::arith::add_r8_rm8),
         0x03 => new_instr!(opcode, prefixes, instr::arith::add_r16_rm16),
+        0x04 => new_instr!(opcode, prefixes, instr::arith::add_al_imm8),
+        0x05 => new_instr!(opcode, prefixes, instr::arith::add_ax_imm16),
         0x06 => new_instr!(opcode, prefixes, instr::stack::push_es),
         0x07 => new_instr!(opcode, prefixes, instr::stack::pop_es),
         0x0e => new_instr!(opcode, prefixes, instr::stack::push_cs),
-        0x15 => new_instr!(opcode, prefixes, instr::arith::adc_ax_imm16),
         0x16 => new_instr!(opcode, prefixes, instr::stack::push_ss),
         0x17 => new_instr!(opcode, prefixes, instr::stack::pop_ss),
         0x1e => new_instr!(opcode, prefixes, instr::stack::push_ds),
         0x1f => new_instr!(opcode, prefixes, instr::stack::pop_ds),
-        0x31 => new_instr!(opcode, prefixes, instr::arith::xor_rm16_r16),
-        0x3c => new_instr!(opcode, prefixes, instr::arith::cmp_al_imm8),
-        0x3d => new_instr!(opcode, prefixes, instr::arith::cmp_ax_imm16),
         opcode @ 0x50..=0x57 => new_instr!(opcode, prefixes, instr::stack::push_r16),
         opcode @ 0x58..=0x5f => new_instr!(opcode, prefixes, instr::stack::pop_r16),
         0x60 => new_instr!(opcode, prefixes, instr::stack::pusha),
@@ -46,7 +46,12 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0x7e => new_instr!(opcode, prefixes, instr::conditionals::jle_rel8),
         0x7f => new_instr!(opcode, prefixes, instr::conditionals::jg_rel8),
         opcode @ 0x80 => match extension(sys) {
-            7 => new_instr!(opcode, prefixes, instr::arith::cmp_rm8_imm8),
+            0 => new_instr!(opcode, prefixes, instr::arith::add_rm8_imm8),
+
+            extension => invalid(sys, opcode, Some(extension)),
+        },
+        opcode @ 0x81 => match extension(sys) {
+            0 => new_instr!(opcode, prefixes, instr::arith::add_rm16_imm16),
 
             extension => invalid(sys, opcode, Some(extension)),
         },
