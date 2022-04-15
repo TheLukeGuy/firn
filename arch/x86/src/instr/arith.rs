@@ -1,5 +1,5 @@
-use crate::GeneralByteReg::Al;
-use crate::GeneralWordReg::Ax;
+use crate::GeneralByteReg::{Ah, Al};
+use crate::GeneralWordReg::{Ax, Dx};
 use crate::{arith, GeneralByteReg, GeneralWordReg, RegMem, System};
 use firn_arch_x86_macros::{arith_instr, instr};
 
@@ -184,7 +184,96 @@ pub fn test_rm16_r16(sys: &mut System, rm: RegMem, reg: GeneralWordReg) {
     arith::and_16(sys, old, reg);
 }
 
-// TODO: MUL
+#[instr("MUL r/m8")]
+pub fn mul_rm8(sys: &mut System, rm: RegMem) {
+    let multiplicand = rm.get_8(sys);
+    let multiplier = sys.cpu.reg_8(Al);
+    let value = multiplicand as u16 * multiplier as u16;
+    sys.cpu.set_reg_16(Ax.into(), value);
+
+    let extended = value > u8::MAX as u16;
+    sys.cpu.flags.carry = extended;
+    sys.cpu.flags.overflow = extended;
+}
+
+#[instr("MUL r/m16")]
+pub fn mul_rm16(sys: &mut System, rm: RegMem) {
+    let multiplicand = rm.get_16(sys);
+    let multiplier = sys.cpu.reg_16(Ax.into());
+    let value = multiplicand as u32 * multiplier as u32;
+
+    let low = (value & 0xff) as u16;
+    let high = (value >> 8) as u16;
+    sys.cpu.set_reg_16(Ax.into(), low);
+    sys.cpu.set_reg_16(Dx.into(), high);
+
+    let extended = high != 0;
+    sys.cpu.flags.carry = extended;
+    sys.cpu.flags.overflow = extended;
+}
+
 // TODO: IMUL
-// TODO: DIV
-// TODO: IDIV
+
+macro_rules! check_div_8 {
+    ($sys:ident, $value:ident, $dividend:ident, $divisor:ident) => {
+        if let Ok($value) = u8::try_from($value) {
+            let remainder = $dividend % $divisor;
+            $sys.cpu.set_reg_8(Ah, remainder as u8);
+            $sys.cpu.set_reg_8(Al, $value);
+        } else {
+            // TODO: Quotient too large, generate interrupt 0
+        }
+    };
+}
+
+macro_rules! check_div_16 {
+    ($sys:ident, $value:ident, $dividend:ident, $divisor:ident) => {
+        if let Ok($value) = u16::try_from($value) {
+            let remainder = $dividend % $divisor;
+            $sys.cpu.set_reg_16(Dx.into(), remainder as u16);
+            $sys.cpu.set_reg_16(Ax.into(), $value);
+        } else {
+            // TODO: Quotient too large, generate interrupt 0
+        }
+    };
+}
+
+#[instr("DIV r/m8")]
+pub fn div_rm8(sys: &mut System, rm: RegMem) {
+    let dividend = sys.cpu.reg_16(Ax.into());
+    let divisor = rm.get_8(sys) as u16;
+    let value = dividend / divisor;
+
+    check_div_8!(sys, value, dividend, divisor);
+}
+
+#[instr("DIV r/m16")]
+pub fn div_rm16(sys: &mut System, rm: RegMem) {
+    let dx = sys.cpu.reg_16(Dx.into());
+    let ax = sys.cpu.reg_16(Ax.into());
+    let dividend = ((dx as u32) << 16) | ax as u32;
+    let divisor = rm.get_16(sys) as u32;
+    let value = dividend / divisor;
+
+    check_div_16!(sys, value, dividend, divisor);
+}
+
+#[instr("IDIV r/m8")]
+pub fn idiv_rm8(sys: &mut System, rm: RegMem) {
+    let dividend = sys.cpu.reg_16(Ax.into()) as i16;
+    let divisor = rm.get_8(sys) as i16;
+    let value = dividend / divisor;
+
+    check_div_8!(sys, value, dividend, divisor);
+}
+
+#[instr("IDIV r/m16")]
+pub fn idiv_rm16(sys: &mut System, rm: RegMem) {
+    let dx = sys.cpu.reg_16(Dx.into());
+    let ax = sys.cpu.reg_16(Ax.into());
+    let dividend = ((dx as i32) << 16) | ax as i32;
+    let divisor = rm.get_16(sys) as i32;
+    let value = dividend / divisor;
+
+    check_div_16!(sys, value, dividend, divisor);
+}
