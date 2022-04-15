@@ -1,7 +1,7 @@
 use crate::GeneralByteReg::Al;
 use crate::GeneralWordReg::{Ax, Di, Dx, Si};
 use crate::SegmentReg::{Ds, Es};
-use crate::{ExtSystem, GeneralWordReg, Prefixes, System};
+use crate::{arith, ExtSystem, GeneralWordReg, Prefixes, System};
 use firn_arch_x86_macros::instr;
 
 #[instr("INSB", REP)]
@@ -58,9 +58,25 @@ pub fn movsw(sys: &mut System, prefixes: &Prefixes) {
     increment(sys, Si, 2);
 }
 
-// These will be done after arith instructions
-// TODO: CMPSB
-// TODO: CMPSW
+#[instr("CMPSB", REPE, REPNE)]
+pub fn cmpsb(sys: &mut System, prefixes: &Prefixes) {
+    let left = sys.mem_reg_8(prefixes.segment, Si);
+    let right = sys.mem_reg_8(Es, Di);
+    arith::sub_8(sys, left, right);
+
+    increment(sys, Si, 1);
+    increment(sys, Di, 1);
+}
+
+#[instr("CMPSW", REPE, REPNE)]
+pub fn cmpsw(sys: &mut System, prefixes: &Prefixes) {
+    let left = sys.mem_reg_16(prefixes.segment, Si);
+    let right = sys.mem_reg_16(Es, Di);
+    arith::sub_16(sys, left, right);
+
+    increment(sys, Si, 2);
+    increment(sys, Di, 2);
+}
 
 #[instr("STOSB", REP)]
 pub fn stosb(sys: &mut System) {
@@ -94,9 +110,23 @@ pub fn lodsw(sys: &mut System, prefixes: &Prefixes) {
     increment(sys, Si, 2);
 }
 
-// These will be done after arith instructions
-// TODO: SCASB
-// TODO: SCASW
+#[instr("SCASB", REPE, REPNE)]
+pub fn scasb(sys: &mut System) {
+    let left = sys.cpu.reg_8(Al);
+    let right = sys.mem_reg_8(Es, Di);
+    arith::sub_8(sys, left, right);
+
+    increment(sys, Di, 1);
+}
+
+#[instr("SCASW", REPE, REPNE)]
+pub fn scasw(sys: &mut System) {
+    let left = sys.cpu.reg_16(Ax.into());
+    let right = sys.mem_reg_16(Es, Di);
+    arith::sub_16(sys, left, right);
+
+    increment(sys, Di, 2);
+}
 
 fn increment(sys: &mut System, reg: GeneralWordReg, amount: u16) {
     if !sys.cpu.flags.direction {

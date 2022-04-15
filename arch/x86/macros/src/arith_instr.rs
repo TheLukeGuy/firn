@@ -47,35 +47,35 @@ pub fn arith_instr_impl(input: TokenStream) -> TokenStream {
         #[firn_arch_x86_macros::instr(#al_imm8_attr)]
         pub fn #al_imm8(sys: &mut crate::System, imm: u8) {
             let old = sys.cpu.reg_8(crate::GeneralByteReg::Al);
-            let value = #operation_8(sys, old, imm);
+            let value = crate::arith::#operation_8(sys, old, imm);
             sys.cpu.set_reg_8(crate::GeneralByteReg::Al, value);
         }
 
         #[firn_arch_x86_macros::instr(#ax_imm16_attr)]
         pub fn #ax_imm16(sys: &mut crate::System, imm: u16) {
             let old = sys.cpu.reg_16(crate::GeneralWordReg::Ax.into());
-            let value = #operation_16(sys, old, imm);
+            let value = crate::arith::#operation_16(sys, old, imm);
             sys.cpu.set_reg_16(crate::GeneralWordReg::Ax.into(), value);
         }
 
         #[firn_arch_x86_macros::instr(#rm8_imm8_attr)]
         pub fn #rm8_imm8(sys: &mut crate::System, rm: crate::RegMem, imm: u8) {
             let old = rm.get_8(sys);
-            let value = #operation_8(sys, old, imm);
+            let value = crate::arith::#operation_8(sys, old, imm);
             rm.set_8(sys, value);
         }
 
         #[firn_arch_x86_macros::instr(#rm16_imm16_attr)]
         pub fn #rm16_imm16(sys: &mut crate::System, rm: crate::RegMem, imm: u16) {
             let old = rm.get_16(sys);
-            let value = #operation_16(sys, old, imm);
+            let value = crate::arith::#operation_16(sys, old, imm);
             rm.set_16(sys, value);
         }
 
         #[firn_arch_x86_macros::instr(#rm16_imm8_attr)]
         pub fn #rm16_imm8(sys: &mut crate::System, rm: crate::RegMem, imm: u8) {
             let old = rm.get_16(sys);
-            let value = #operation_16(sys, old, imm as u16);
+            let value = crate::arith::#operation_16(sys, old, imm as u16);
             rm.set_16(sys, value);
         }
 
@@ -83,7 +83,7 @@ pub fn arith_instr_impl(input: TokenStream) -> TokenStream {
         pub fn #rm8_r8(sys: &mut crate::System, rm: crate::RegMem, reg: crate::GeneralByteReg) {
             let old = rm.get_8(sys);
             let reg = sys.cpu.reg_8(reg);
-            let value = #operation_8(sys, old, reg);
+            let value = crate::arith::#operation_8(sys, old, reg);
             rm.set_8(sys, value);
         }
 
@@ -91,7 +91,7 @@ pub fn arith_instr_impl(input: TokenStream) -> TokenStream {
         pub fn #rm16_r16(sys: &mut crate::System, rm: crate::RegMem, reg: crate::GeneralWordReg) {
             let old = rm.get_16(sys);
             let reg = sys.cpu.reg_16(reg.into());
-            let value = #operation_16(sys, old, reg);
+            let value = crate::arith::#operation_16(sys, old, reg);
             rm.set_16(sys, value);
         }
 
@@ -99,7 +99,7 @@ pub fn arith_instr_impl(input: TokenStream) -> TokenStream {
         pub fn #r8_rm8(sys: &mut crate::System, reg: crate::GeneralByteReg, rm: crate::RegMem) {
             let old = sys.cpu.reg_8(reg);
             let rm = rm.get_8(sys);
-            let value = #operation_8(sys, old, rm);
+            let value = crate::arith::#operation_8(sys, old, rm);
             sys.cpu.set_reg_8(reg, value);
         }
 
@@ -107,7 +107,7 @@ pub fn arith_instr_impl(input: TokenStream) -> TokenStream {
         pub fn #r16_rm16(sys: &mut crate::System, reg: crate::GeneralWordReg, rm: crate::RegMem) {
             let old = sys.cpu.reg_16(reg.into());
             let rm = rm.get_16(sys);
-            let value = #operation_16(sys, old, rm);
+            let value = crate::arith::#operation_16(sys, old, rm);
             sys.cpu.set_reg_16(reg.into(), value);
         }
     };

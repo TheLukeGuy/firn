@@ -1,3 +1,4 @@
+pub mod arith;
 pub mod cpu;
 pub mod device;
 pub mod flags;
