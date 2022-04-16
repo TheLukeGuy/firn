@@ -88,6 +88,7 @@ impl Cpu {
     }
 
     pub fn inc_ip_8(&mut self, amount: u8) {
+        let amount = amount as i8 as u16;
         self.ip = self.ip.wrapping_add(amount as u16);
     }
 
