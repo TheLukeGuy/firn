@@ -168,15 +168,8 @@ impl ModrmRm {
     }
 }
 
-fn match_operand(operand: &Operand) -> (Vec<TokenStream2>, Option<ModrmRm>) {
+fn match_operand(operand: &Operand, modrm: &Option<ModrmRm>) -> Vec<TokenStream2> {
     let mut token_streams = Vec::new();
-
-    let modrm = match operand {
-        Operand::M8 | Operand::Rm8 => Some(ModrmRm::Byte),
-        Operand::M16 | Operand::Rm16 | Operand::M16_16 => Some(ModrmRm::Word),
-
-        _ => None,
-    };
 
     match operand {
         Operand::Ignored => (),
@@ -229,7 +222,7 @@ fn match_operand(operand: &Operand) -> (Vec<TokenStream2>, Option<ModrmRm>) {
         }
     };
 
-    (token_streams, modrm)
+    token_streams
 }
 
 pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -242,11 +235,14 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     } = parse_macro_input!(args as Instr);
     let input = parse_macro_input!(input as ItemFn);
 
-    let mut operand_decodes = Vec::new();
     let mut modrm_rm = None;
     for operand in &operands {
-        let (mut decodes, modrm) = match_operand(operand);
-        operand_decodes.append(&mut decodes);
+        let modrm = match operand {
+            Operand::M8 | Operand::Rm8 => Some(ModrmRm::Byte),
+            Operand::M16 | Operand::Rm16 | Operand::M16_16 => Some(ModrmRm::Word),
+
+            _ => None,
+        };
 
         if let Some(modrm) = modrm {
             match modrm_rm {
@@ -258,6 +254,12 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                 _ => modrm_rm = Some(modrm),
             };
         }
+    }
+
+    let mut operand_decodes = Vec::new();
+    for operand in &operands {
+        let mut decodes = match_operand(operand, &modrm_rm);
+        operand_decodes.append(&mut decodes);
     }
 
     let modrm_reg = match modrm_rm {
