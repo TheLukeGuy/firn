@@ -1,23 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
-use syn::parse::{Parse, ParseStream};
 use syn::parse_macro_input;
 
-struct ArithInstr {
-    instr: Ident,
-}
-
-impl Parse for ArithInstr {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let instr = input.parse()?;
-
-        Ok(ArithInstr { instr })
-    }
-}
-
 pub fn arith_instr_impl(input: TokenStream) -> TokenStream {
-    let ArithInstr { instr } = parse_macro_input!(input as ArithInstr);
+    let instr = parse_macro_input!(input as Ident);
 
     let instr_lower = Ident::new(&instr.to_string().to_lowercase(), instr.span());
     let operation_8 = format_ident!("{}_8", instr_lower);

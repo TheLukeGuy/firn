@@ -10,7 +10,7 @@ use syn::{parse_macro_input, Error, ItemFn, LitStr, Token};
 #[derive(Eq, PartialEq, EnumString)]
 #[strum(ascii_case_insensitive)]
 enum Operand {
-    SingleReg,
+    Ignored,
 
     #[strum(serialize = "imm8", serialize = "rel8")]
     Imm8,
@@ -41,12 +41,15 @@ struct Mnemonic {
 }
 
 impl Mnemonic {
-    fn is_single_reg(operand: &str) -> bool {
+    fn is_ignored(operand: &str) -> bool {
         let last = operand.to_lowercase().chars().last().unwrap();
 
-        operand.len() == 2
+        let single_reg = operand.len() == 2
             && operand.chars().all(char::is_alphabetic)
-            && ['l', 'x', 's'].contains(&last)
+            && ['l', 'x', 's'].contains(&last);
+        let number = operand.chars().all(char::is_numeric);
+
+        single_reg || number
     }
 }
 
@@ -72,7 +75,7 @@ impl Parse for Mnemonic {
                 .replace('/', "");
             let operand = match Operand::from_str(&operand_str) {
                 Ok(operand) => operand,
-                Err(_) if Self::is_single_reg(&operand_str) => Operand::SingleReg,
+                Err(_) if Self::is_ignored(&operand_str) => Operand::Ignored,
                 Err(_) => return Err(Error::new_spanned(tokens, "invalid operand")),
             };
 
@@ -176,7 +179,7 @@ fn match_operand(operand: &Operand) -> (Vec<TokenStream2>, Option<ModrmRm>) {
     };
 
     match operand {
-        Operand::SingleReg => (),
+        Operand::Ignored => (),
         Operand::Imm8 => token_streams.push(quote! {
             crate::ExtSystem::read_mem_8(sys)
         }),
