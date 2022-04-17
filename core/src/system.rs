@@ -83,34 +83,28 @@ where
     pub fn port_in_8(&mut self, port: u16) -> Option<u8> {
         match port_handler!(self, port, In8) {
             Some((device, handler)) => Some(handler(device)),
-            None => {
-                println!("unimplemented IO port: {:#x}", port);
-                None
-            }
+            None => panic!("unimplemented IO port: {:#x}", port),
         }
     }
 
     pub fn port_in_16(&mut self, port: u16) -> Option<u16> {
         match port_handler!(self, port, In16) {
             Some((device, handler)) => Some(handler(device)),
-            None => {
-                println!("unimplemented IO port: {:#x}", port);
-                None
-            }
+            None => panic!("unimplemented IO port: {:#x}", port),
         }
     }
 
     pub fn port_out_8(&mut self, port: u16, value: u8) {
         match port_handler!(self, port, Out8) {
             Some((device, handler)) => handler(device, value),
-            None => println!("unimplemented IO port: {:#x}", port),
+            None => panic!("unimplemented IO port: {:#x}", port),
         }
     }
 
     pub fn port_out_16(&mut self, port: u16, value: u16) {
         match port_handler!(self, port, Out16) {
             Some((device, handler)) => handler(device, value),
-            None => println!("unimplemented IO port: {:#x}", port),
+            None => panic!("unimplemented IO port: {:#x}", port),
         }
     }
 }

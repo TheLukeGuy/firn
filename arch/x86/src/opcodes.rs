@@ -198,6 +198,10 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0xc9 => new_instr!(opcode, prefixes, instr::control::leave),
         0xca => new_instr!(opcode, prefixes, instr::control::ret_imm16_far),
         0xcb => new_instr!(opcode, prefixes, instr::control::ret_far),
+        0xcc => new_instr!(opcode, prefixes, instr::semaphores::int_3),
+        0xcd => new_instr!(opcode, prefixes, instr::semaphores::int_imm8),
+        0xce => new_instr!(opcode, prefixes, instr::semaphores::into),
+        0xcf => new_instr!(opcode, prefixes, instr::semaphores::iret),
         opcode @ 0xd0 => match extension(sys) {
             0 => new_instr!(opcode, prefixes, instr::shifts::rol_rm8_1),
             1 => new_instr!(opcode, prefixes, instr::shifts::ror_rm8_1),

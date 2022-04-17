@@ -5,6 +5,9 @@ use crate::{Cpu, GeneralByteReg, GeneralWordReg, SegmentReg, WordReg};
 pub type System = firn_core::System<Cpu>;
 
 pub trait ExtSystem {
+    fn mem_linear_8(&self, address: usize) -> u8;
+    fn mem_linear_16(&self, address: usize) -> u16;
+
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize;
 
     fn mem_8(&self, segment: SegmentReg, offset: u16) -> u8;
@@ -36,9 +39,22 @@ pub trait ExtSystem {
 
     fn pop_reg_8(&mut self, reg: GeneralByteReg);
     fn pop_reg_16(&mut self, reg: WordReg);
+
+    fn interrupt(&mut self, interrupt: u8);
 }
 
 impl ExtSystem for System {
+    fn mem_linear_8(&self, address: usize) -> u8 {
+        self.mem[address]
+    }
+
+    fn mem_linear_16(&self, address: usize) -> u16 {
+        let low = self.mem[address];
+        let high = self.mem[address.wrapping_add(1)];
+
+        u16::from_le_bytes([low, high])
+    }
+
     fn linear_mem(&self, segment: SegmentReg, offset: u16) -> usize {
         let segment = self.cpu.reg_16(segment.into()) as usize;
 
@@ -48,16 +64,13 @@ impl ExtSystem for System {
     fn mem_8(&self, segment: SegmentReg, offset: u16) -> u8 {
         let linear = self.linear_mem(segment, offset);
 
-        self.mem[linear]
+        self.mem_linear_8(linear)
     }
 
     fn mem_16(&self, segment: SegmentReg, offset: u16) -> u16 {
         let linear = self.linear_mem(segment, offset);
 
-        let low = self.mem[linear];
-        let high = self.mem[linear.wrapping_add(1)];
-
-        u16::from_le_bytes([low, high])
+        self.mem_linear_16(linear)
     }
 
     fn mem_reg_8(&self, segment: SegmentReg, offset: GeneralWordReg) -> u8 {
@@ -161,5 +174,24 @@ impl ExtSystem for System {
     fn pop_reg_16(&mut self, reg: WordReg) {
         let value = self.pop_16();
         self.cpu.set_reg_16(reg, value);
+    }
+
+    fn interrupt(&mut self, interrupt: u8) {
+        let flags = self.cpu.flags.get_16();
+        self.push_16(flags);
+
+        self.cpu.flags.interrupt = false;
+        self.cpu.flags.trap = false;
+
+        let cs = self.cpu.reg_16(Cs.into());
+        self.push_16(cs);
+        self.push_16(self.cpu.ip);
+
+        let ivt_element = (interrupt as usize) << 2;
+        let new_ip = self.mem_linear_16(ivt_element);
+        let new_cs = self.mem_linear_16(ivt_element + 2);
+
+        self.cpu.ip = new_ip;
+        self.cpu.set_reg_16(Cs.into(), new_cs);
     }
 }

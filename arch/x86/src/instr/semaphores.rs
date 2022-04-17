@@ -1,5 +1,6 @@
 use crate::GeneralWordReg::Ax;
-use crate::System;
+use crate::SegmentReg::Cs;
+use crate::{ExtSystem, System};
 use firn_arch_x86_macros::instr;
 use std::thread;
 use std::time::Duration;
@@ -22,5 +23,30 @@ pub fn hlt(_sys: &mut System) {
     }
 }
 
-// TODO: INT
+#[instr("INT 3")]
+pub fn int_3(sys: &mut System) {
+    sys.interrupt(3);
+}
+
+#[instr("INT imm8")]
+pub fn int_imm8(sys: &mut System, imm: u8) {
+    sys.interrupt(imm);
+}
+
+#[instr("INTO")]
+pub fn into(sys: &mut System) {
+    if sys.cpu.flags.overflow {
+        sys.interrupt(4);
+    }
+}
+
+#[instr("IRET")]
+pub fn iret(sys: &mut System) {
+    sys.cpu.ip = sys.pop_16();
+    let cs = sys.pop_16();
+    sys.cpu.set_reg_16(Cs.into(), cs);
+    let flags = sys.pop_16();
+    sys.cpu.flags.set_16(flags);
+}
+
 // TODO: IRET

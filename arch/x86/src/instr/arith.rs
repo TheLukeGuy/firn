@@ -221,7 +221,7 @@ macro_rules! check_div_8 {
             $sys.cpu.set_reg_8(Ah, remainder as u8);
             $sys.cpu.set_reg_8(Al, $value);
         } else {
-            // TODO: Quotient too large, generate interrupt 0
+            crate::ExtSystem::interrupt($sys, 0);
         }
     };
 }
@@ -233,7 +233,7 @@ macro_rules! check_div_16 {
             $sys.cpu.set_reg_16(Dx.into(), remainder as u16);
             $sys.cpu.set_reg_16(Ax.into(), $value);
         } else {
-            // TODO: Quotient too large, generate interrupt 0
+            crate::ExtSystem::interrupt($sys, 0);
         }
     };
 }
