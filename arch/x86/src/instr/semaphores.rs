@@ -48,5 +48,3 @@ pub fn iret(sys: &mut System) {
     let flags = sys.pop_16();
     sys.cpu.flags.set_16(flags);
 }
-
-// TODO: IRET
