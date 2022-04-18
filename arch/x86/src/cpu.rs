@@ -108,12 +108,13 @@ impl cpu::Cpu for Cpu {
     }
 
     fn step(sys: &mut System<Self>) {
-        print!("({:#x}) ", sys.linear_mem(Cs, sys.cpu.ip));
+        let address = sys.linear_mem(Cs, sys.cpu.ip);
+        print!("({:#x}) ({}) ", address, sys.cpu.decoded);
         io::stdout().flush().unwrap();
 
         let instr = Instr::decode(sys);
         sys.cpu.decoded += 1;
-        println!("({}) Decoded: {}", sys.cpu.decoded, instr.meta.mnemonic);
+        println!("Decoded: {}", instr.meta.mnemonic);
         instr.execute(sys);
     }
 }
