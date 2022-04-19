@@ -1,8 +1,6 @@
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
 use crate::{instr, ExtSystem, Instr, Prefixes, System};
 use firn_arch_x86_macros::new_instr;
-use std::io;
-use std::io::Write;
 
 fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
     match opcode {
@@ -314,12 +312,7 @@ pub fn decode(sys: &mut System) -> Instr {
             0xf0 => prefixes.lock = true,
             0xf2 => prefixes.rep_ne = true,
             0xf3 => prefixes.rep_or_rep_e = true,
-            opcode => {
-                print!("[{:#04x}] ", opcode);
-                io::stdout().flush().unwrap();
-
-                break match_opcode(sys, opcode, prefixes);
-            }
+            opcode => break match_opcode(sys, opcode, prefixes),
         }
     }
 }

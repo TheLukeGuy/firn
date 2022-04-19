@@ -2,8 +2,6 @@ use crate::SegmentReg::{Cs, Ds, Es, Ss};
 use crate::{ExtSystem, Flags, GeneralByteReg, Instr, WordReg};
 use firn_core::cpu::Restrict;
 use firn_core::{cpu, System};
-use std::io;
-use std::io::Write;
 
 #[derive(Eq, PartialEq)]
 pub enum Feature {
@@ -108,13 +106,15 @@ impl cpu::Cpu for Cpu {
     }
 
     fn step(sys: &mut System<Self>) {
-        let address = sys.linear_mem(Cs, sys.cpu.ip);
-        print!("({:#x}) ({}) ", address, sys.cpu.decoded);
-        io::stdout().flush().unwrap();
-
         let instr = Instr::decode(sys);
         sys.cpu.decoded += 1;
-        println!("Decoded: {}", instr.meta.mnemonic);
+
+        let address = sys.linear_mem(Cs, sys.cpu.ip);
+        println!(
+            "({:#x}) ({}) Decoded: {}",
+            address, sys.cpu.decoded, instr.meta.mnemonic
+        );
+
         instr.execute(sys);
     }
 }
