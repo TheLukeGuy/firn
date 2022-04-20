@@ -5,7 +5,7 @@ use firn_core::{cpu, System};
 
 #[derive(Eq, PartialEq)]
 pub enum Feature {
-    Intel80186,
+    InstrCpu1,
 }
 
 pub struct Cpu {

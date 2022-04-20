@@ -1,6 +1,7 @@
 use crate::SegmentReg::{Cs, Ds, Es, Ss};
-use crate::{instr, ExtSystem, Instr, Prefixes, System};
+use crate::{instr, ExtSystem, Feature, Instr, Prefixes, System};
 use firn_arch_x86_macros::new_instr;
+use firn_core::cpu::Restrict;
 
 fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
     match opcode {
@@ -63,14 +64,17 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         opcode @ 0x48..=0x4f => new_instr!(opcode, prefixes, instr::arith::dec_r16),
         opcode @ 0x50..=0x57 => new_instr!(opcode, prefixes, instr::stack::push_r16),
         opcode @ 0x58..=0x5f => new_instr!(opcode, prefixes, instr::stack::pop_r16),
-        0x60 => new_instr!(opcode, prefixes, instr::stack::pusha),
-        0x61 => new_instr!(opcode, prefixes, instr::stack::popa),
-        0x68 => new_instr!(opcode, prefixes, instr::stack::push_imm16),
-        0x6a => new_instr!(opcode, prefixes, instr::stack::push_imm8),
-        0x6c => new_instr!(opcode, prefixes, instr::strings::insb),
-        0x6d => new_instr!(opcode, prefixes, instr::strings::insw),
-        0x6e => new_instr!(opcode, prefixes, instr::strings::outsb),
-        0x6f => new_instr!(opcode, prefixes, instr::strings::outsw),
+        opcode @ 0x60..=0x6f if feature(sys, Feature::InstrCpu1) => match opcode {
+            0x60 => new_instr!(opcode, prefixes, instr::stack::pusha),
+            0x61 => new_instr!(opcode, prefixes, instr::stack::popa),
+            0x68 => new_instr!(opcode, prefixes, instr::stack::push_imm16),
+            0x6a => new_instr!(opcode, prefixes, instr::stack::push_imm8),
+            0x6c => new_instr!(opcode, prefixes, instr::strings::insb),
+            0x6d => new_instr!(opcode, prefixes, instr::strings::insw),
+            0x6e => new_instr!(opcode, prefixes, instr::strings::outsb),
+            0x6f => new_instr!(opcode, prefixes, instr::strings::outsw),
+            _ => invalid(sys, opcode, None),
+        },
         0x70 => new_instr!(opcode, prefixes, instr::conditionals::jo_rel8),
         0x71 => new_instr!(opcode, prefixes, instr::conditionals::jno_rel8),
         0x72 => new_instr!(opcode, prefixes, instr::conditionals::jc_rel8),
@@ -160,7 +164,7 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
         0xaf => new_instr!(opcode, prefixes, instr::strings::scasw),
         opcode @ 0xb0..=0xb7 => new_instr!(opcode, prefixes, instr::transfer::mov_r8_imm8),
         opcode @ 0xb8..=0xbf => new_instr!(opcode, prefixes, instr::transfer::mov_r16_imm16),
-        opcode @ 0xc0 => match extension(sys) {
+        opcode @ 0xc0 if feature(sys, Feature::InstrCpu1) => match extension(sys) {
             0 => new_instr!(opcode, prefixes, instr::shifts::rol_rm8_imm8),
             1 => new_instr!(opcode, prefixes, instr::shifts::ror_rm8_imm8),
             2 => new_instr!(opcode, prefixes, instr::shifts::rcl_rm8_imm8),
@@ -170,7 +174,7 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
             7 => new_instr!(opcode, prefixes, instr::shifts::sar_rm8_imm8),
             extension => invalid(sys, opcode, Some(extension)),
         },
-        opcode @ 0xc1 => match extension(sys) {
+        opcode @ 0xc1 if feature(sys, Feature::InstrCpu1) => match extension(sys) {
             0 => new_instr!(opcode, prefixes, instr::shifts::rol_rm16_imm8),
             1 => new_instr!(opcode, prefixes, instr::shifts::ror_rm16_imm8),
             2 => new_instr!(opcode, prefixes, instr::shifts::rcl_rm16_imm8),
@@ -192,8 +196,12 @@ fn match_opcode(sys: &mut System, opcode: u8, prefixes: Prefixes) -> Instr {
             0 => new_instr!(opcode, prefixes, instr::transfer::mov_rm16_imm16),
             extension => invalid(sys, opcode, Some(extension)),
         },
-        0xc8 => new_instr!(opcode, prefixes, instr::control::enter_imm16_imm8),
-        0xc9 => new_instr!(opcode, prefixes, instr::control::leave),
+        0xc8 if feature(sys, Feature::InstrCpu1) => {
+            new_instr!(opcode, prefixes, instr::control::enter_imm16_imm8)
+        }
+        0xc9 if feature(sys, Feature::InstrCpu1) => {
+            new_instr!(opcode, prefixes, instr::control::leave)
+        }
         0xca => new_instr!(opcode, prefixes, instr::control::ret_imm16_far),
         0xcb => new_instr!(opcode, prefixes, instr::control::ret_far),
         0xcc => new_instr!(opcode, prefixes, instr::semaphores::int_3),
@@ -320,6 +328,10 @@ pub fn decode(sys: &mut System) -> Instr {
 fn extension(sys: &mut System) -> u8 {
     // TODO: Does every instruction with an extension use ModRM?
     (sys.peek_mem_8() / 0o10) % 0o10
+}
+
+fn feature(sys: &mut System, feature: Feature) -> bool {
+    sys.cpu.has_feature(feature)
 }
 
 fn invalid(sys: &mut System, opcode: u8, extension: Option<u8>) -> ! {

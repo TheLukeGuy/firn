@@ -17,7 +17,7 @@ fn main() {
         .unwrap_or_else(|err| println!("Failed to dump memory: {}", err));
 
     let mut cpu = Cpu::new();
-    cpu.add_feature(Feature::Intel80186);
+    cpu.add_feature(Feature::InstrCpu1);
 
     let mut system = System::new(cpu, map);
     let cmos = Cmos::new_current_time();
