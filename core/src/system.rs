@@ -1,5 +1,5 @@
 use crate::cpu::Cpu;
-use crate::device::{Device, DeviceRef, DynDeviceRef, IoPortHandler};
+use crate::device::{Device, IoPortHandler};
 use crate::mem::MemMap;
 
 pub struct System<C>
@@ -8,7 +8,7 @@ where
 {
     pub cpu: Box<C>,
     pub mem: MemMap,
-    pub devices: Vec<DynDeviceRef<C>>,
+    pub devices: Option<Vec<Box<dyn Device<C>>>>,
 }
 
 impl<C> System<C>
@@ -19,33 +19,34 @@ where
         Self {
             cpu: Box::new(cpu),
             mem,
-            devices: Vec::new(),
+            devices: Some(Vec::new()),
         }
     }
 
-    pub fn add_device<D>(&mut self, device: D) -> DeviceRef<C, D>
-    where
-        D: Device<C>,
-    {
-        let device = DynDeviceRef::new(device);
-        self.devices.push(device);
-
-        device.specific()
+    pub fn add_device(&mut self, device: impl Device<C>) {
+        let boxed = Box::new(device);
+        self.devices.as_mut().unwrap().push(boxed);
     }
 
     pub fn init(&mut self) {
-        for device in self.devices {
-            device.borrow_mut().init(self);
+        let mut devices = self.devices.take().unwrap();
+        for device in &mut devices {
+            device.init(self);
         }
+        self.devices = Some(devices);
+
         self.cpu.init();
     }
 
     pub fn start(&mut self) {
         self.cpu.reset();
         loop {
-            for device in self.devices {
-                device.borrow_mut().step(self);
+            let mut devices = self.devices.take().unwrap();
+            for device in &mut devices {
+                device.step(self);
             }
+            self.devices = Some(devices);
+
             C::step(self);
         }
     }
@@ -56,29 +57,12 @@ where
     }
 }
 
-macro_rules! port_handler {
-    ($self:ident, $port:ident, $variant:ident) => {
-        $self
-            .devices
-            .iter_mut()
-            .filter_map(|device| {
-                device
-                    .ports()
-                    .remove(&$port)
-                    .map(|handlers| (device, handlers))
-            })
-            .filter_map(|(device, handlers)| {
-                let handler = handlers
-                    .iter()
-                    .filter_map(|handler| match handler {
-                        IoPortHandler::$variant(handler) => Some(handler),
-                        _ => None,
-                    })
-                    .next();
-
-                handler.map(|handler| (&mut **device, *handler))
-            })
-            .next()
+macro_rules! filter_port {
+    ($device:ident, $port:ident) => {
+        $device
+            .ports()
+            .iter()
+            .filter(|&(handler_port, _)| *handler_port == $port)
     };
 }
 
@@ -87,30 +71,62 @@ where
     C: Cpu,
 {
     pub fn port_in_8(&mut self, port: u16) -> Option<u8> {
-        match port_handler!(self, port, In8) {
-            Some((device, handler)) => Some(handler(device)),
-            None => panic!("unimplemented IO port: {:#x}", port),
+        let mut devices = self.devices.take().unwrap();
+        for device in &mut devices {
+            for (_, handler) in filter_port!(device, port) {
+                if let IoPortHandler::In8(handler) = handler {
+                    let value = handler(&mut **device, self);
+                    self.devices = Some(devices);
+                    return Some(value);
+                }
+            }
         }
+        self.devices = Some(devices);
+
+        None
     }
 
     pub fn port_in_16(&mut self, port: u16) -> Option<u16> {
-        match port_handler!(self, port, In16) {
-            Some((device, handler)) => Some(handler(device)),
-            None => panic!("unimplemented IO port: {:#x}", port),
+        let mut devices = self.devices.take().unwrap();
+        for device in &mut devices {
+            for (_, handler) in filter_port!(device, port) {
+                if let IoPortHandler::In16(handler) = handler {
+                    let value = handler(&mut **device, self);
+                    self.devices = Some(devices);
+                    return Some(value);
+                }
+            }
         }
+        self.devices = Some(devices);
+
+        None
     }
 
     pub fn port_out_8(&mut self, port: u16, value: u8) {
-        match port_handler!(self, port, Out8) {
-            Some((device, handler)) => handler(device, value),
-            None => panic!("unimplemented IO port: {:#x}", port),
+        let mut devices = self.devices.take().unwrap();
+        for device in &mut devices {
+            for (_, handler) in filter_port!(device, port) {
+                if let IoPortHandler::Out8(handler) = handler {
+                    handler(&mut **device, self, value);
+                    self.devices = Some(devices);
+                    return;
+                }
+            }
         }
+        self.devices = Some(devices);
     }
 
     pub fn port_out_16(&mut self, port: u16, value: u16) {
-        match port_handler!(self, port, Out16) {
-            Some((device, handler)) => handler(device, value),
-            None => panic!("unimplemented IO port: {:#x}", port),
+        let mut devices = self.devices.take().unwrap();
+        for device in &mut devices {
+            for (_, handler) in filter_port!(device, port) {
+                if let IoPortHandler::Out16(handler) = handler {
+                    handler(&mut **device, self, value);
+                    self.devices = Some(devices);
+                    return;
+                }
+            }
         }
+        self.devices = Some(devices);
     }
 }

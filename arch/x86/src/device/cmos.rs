@@ -1,4 +1,5 @@
 use chrono::{DateTime, Datelike, Timelike, Utc};
+use firn_core::cpu::Cpu;
 use firn_core::device::{io_port, io_ports, Device, IoPortHandler};
 use firn_core::System;
 use multimap::MultiMap;
@@ -115,7 +116,10 @@ impl Cmos {
     }
 }
 
-impl<C> Device<C> for Cmos {
+impl<C> Device<C> for Cmos
+where
+    C: Cpu + 'static,
+{
     fn init(&mut self, _sys: &mut System<C>) {
         let start_time = self.current_time();
         self.start_time = Some(start_time);

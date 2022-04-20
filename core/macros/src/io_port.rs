@@ -81,10 +81,14 @@ pub fn io_port_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #input
 
-        #vis fn #downcast_name(
-            device: &mut dyn firn_core::device::Device,
+        #vis fn #downcast_name<C>(
+            device: &mut dyn firn_core::device::Device<C>,
+            sys: &mut firn_core::System<C>,
             #(#params),*
-        ) #return_type {
+        ) #return_type
+        where
+            C: firn_core::cpu::Cpu + 'static,
+        {
             let downcast = device
                 .downcast_mut::<Self>()
                 .expect("device cannot be downcast to Self");
@@ -92,7 +96,10 @@ pub fn io_port_impl(args: TokenStream, input: TokenStream) -> TokenStream {
             downcast.#name(#(#param_names),*)
         }
 
-        #vis fn #meta_name(&self) -> firn_core::device::IoPortMeta {
+        #vis fn #meta_name<C>(&self) -> firn_core::device::IoPortMeta<C>
+        where
+            C: firn_core::cpu::Cpu + 'static,
+        {
             firn_core::device::IoPortMeta {
                 port: #port,
                 handler: firn_core::device::IoPortHandler::#variant(Self::#downcast_name),
