@@ -1,5 +1,6 @@
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use firn_core::device::{io_port, io_ports, Device, IoPortHandler};
+use firn_core::System;
 use multimap::MultiMap;
 use std::time;
 use std::time::{Duration, SystemTime};
@@ -114,15 +115,15 @@ impl Cmos {
     }
 }
 
-impl Device for Cmos {
-    fn init(&mut self) {
+impl<C> Device<C> for Cmos {
+    fn init(&mut self, _sys: &mut System<C>) {
         let start_time = self.current_time();
         self.start_time = Some(start_time);
 
         self.sync();
     }
 
-    fn step(&mut self) {
+    fn step(&mut self, _sys: &mut System<C>) {
         let current_time = self.current_time().as_micros();
         if current_time - self.last_update_micros < 1_000_000 {
             return;
@@ -176,7 +177,7 @@ impl Device for Cmos {
         self.stop_updating_rtc();
     }
 
-    fn ports(&self) -> MultiMap<u16, IoPortHandler> {
+    fn ports(&self) -> MultiMap<u16, IoPortHandler<C>> {
         io_ports![select_reg, reg_value, set_reg_value]
     }
 }

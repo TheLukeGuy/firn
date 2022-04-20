@@ -85,11 +85,11 @@ pub fn io_port_impl(args: TokenStream, input: TokenStream) -> TokenStream {
             device: &mut dyn firn_core::device::Device,
             #(#params),*
         ) #return_type {
-            let downcasted = device
+            let downcast = device
                 .downcast_mut::<Self>()
                 .expect("device cannot be downcast to Self");
 
-            downcasted.#name(#(#param_names),*)
+            downcast.#name(#(#param_names),*)
         }
 
         #vis fn #meta_name(&self) -> firn_core::device::IoPortMeta {

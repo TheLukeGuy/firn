@@ -1,5 +1,5 @@
 use crate::cpu::Cpu;
-use crate::device::{Device, IoPortHandler};
+use crate::device::{Device, DeviceRef, DynDeviceRef, IoPortHandler};
 use crate::mem::MemMap;
 
 pub struct System<C>
@@ -8,7 +8,7 @@ where
 {
     pub cpu: Box<C>,
     pub mem: MemMap,
-    pub devices: Vec<Box<dyn Device>>,
+    pub devices: Vec<DynDeviceRef<C>>,
 }
 
 impl<C> System<C>
@@ -23,13 +23,19 @@ where
         }
     }
 
-    pub fn add_device(&mut self, device: impl Device + 'static) {
-        self.devices.push(Box::new(device));
+    pub fn add_device<D>(&mut self, device: D) -> DeviceRef<C, D>
+    where
+        D: Device<C>,
+    {
+        let device = DynDeviceRef::new(device);
+        self.devices.push(device);
+
+        device.specific()
     }
 
     pub fn init(&mut self) {
-        for device in &mut self.devices {
-            device.init();
+        for device in self.devices {
+            device.borrow_mut().init(self);
         }
         self.cpu.init();
     }
@@ -37,8 +43,8 @@ where
     pub fn start(&mut self) {
         self.cpu.reset();
         loop {
-            for device in &mut self.devices {
-                device.step();
+            for device in self.devices {
+                device.borrow_mut().step(self);
             }
             C::step(self);
         }
