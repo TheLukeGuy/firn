@@ -1,4 +1,4 @@
-use crate::basic_mem_impl;
+use crate::mem::basic_mem_impl;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 use std::path::Path;
 use std::{fs, io};

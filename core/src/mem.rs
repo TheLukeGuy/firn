@@ -41,7 +41,6 @@ pub trait Mem: Index<usize, Output = u8> + IndexMut<usize> {
         Self: Sized;
 }
 
-#[macro_export]
 macro_rules! basic_mem_impl {
     ($struct:ident, $vec_field:ident) => {
         impl $crate::mem::Mem for $struct {
@@ -66,3 +65,5 @@ macro_rules! basic_mem_impl {
         }
     };
 }
+
+pub(crate) use basic_mem_impl;
