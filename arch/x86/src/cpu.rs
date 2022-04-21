@@ -111,8 +111,8 @@ impl cpu::Cpu for Cpu {
 
         let address = sys.linear_mem(Cs, sys.cpu.ip);
         println!(
-            "({:#x}) ({}) Decoded: {}",
-            address, sys.cpu.decoded, instr.meta.mnemonic
+            "({:#x}) ({}) [{:#04x}] Decoded: {}",
+            address, sys.cpu.decoded, instr.opcode, instr.meta.mnemonic
         );
 
         instr.execute(sys);

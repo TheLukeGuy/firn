@@ -7,7 +7,9 @@ use firn_arch_x86_macros::instr;
 #[instr("INSB", REP)]
 pub fn insb(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
-    let value = sys.port_in_8(port).unwrap_or(0);
+    let value = sys
+        .port_in_8(port)
+        .unwrap_or_else(|| panic!("unimplemented IO port: {:#x}", port));
     sys.set_mem_reg_8(Es, Di, value);
 
     increment(sys, Di, 1);
@@ -16,7 +18,9 @@ pub fn insb(sys: &mut System) {
 #[instr("INSW", REP)]
 pub fn insw(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
-    let value = sys.port_in_16(port).unwrap_or(0);
+    let value = sys
+        .port_in_16(port)
+        .unwrap_or_else(|| panic!("unimplemented IO port: {:#x}", port));
     sys.set_mem_reg_16(Es, Di, value);
 
     increment(sys, Di, 2);
@@ -26,7 +30,8 @@ pub fn insw(sys: &mut System) {
 pub fn outsb(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
     let value = sys.mem_reg_8(Ds, Si);
-    sys.port_out_8(port, value);
+    sys.port_out_8(port, value)
+        .unwrap_or_else(|| panic!("unimplemented IO port: {:#x}", port));
 
     increment(sys, Si, 1);
 }
@@ -35,7 +40,8 @@ pub fn outsb(sys: &mut System) {
 pub fn outsw(sys: &mut System) {
     let port = sys.cpu.reg_16(Dx.into());
     let value = sys.mem_reg_16(Ds, Si);
-    sys.port_out_16(port, value);
+    sys.port_out_16(port, value)
+        .unwrap_or_else(|| panic!("unimplemented IO port: {:#x}", port));
 
     increment(sys, Si, 2);
 }

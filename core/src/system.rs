@@ -102,31 +102,35 @@ where
         None
     }
 
-    pub fn port_out_8(&mut self, port: u16, value: u8) {
+    pub fn port_out_8(&mut self, port: u16, value: u8) -> Option<()> {
         let mut devices = self.devices.take().unwrap();
         for device in &mut devices {
             for (_, handler) in filter_port!(device, port) {
                 if let IoPortHandler::Out8(handler) = handler {
                     handler(&mut **device, self, value);
                     self.devices = Some(devices);
-                    return;
+                    return Some(());
                 }
             }
         }
         self.devices = Some(devices);
+
+        None
     }
 
-    pub fn port_out_16(&mut self, port: u16, value: u16) {
+    pub fn port_out_16(&mut self, port: u16, value: u16) -> Option<()> {
         let mut devices = self.devices.take().unwrap();
         for device in &mut devices {
             for (_, handler) in filter_port!(device, port) {
                 if let IoPortHandler::Out16(handler) = handler {
                     handler(&mut **device, self, value);
                     self.devices = Some(devices);
-                    return;
+                    return Some(());
                 }
             }
         }
         self.devices = Some(devices);
+
+        None
     }
 }
