@@ -1,14 +1,16 @@
 use crate::cpu::Cpu;
-use crate::device::{Device, IoPortHandler};
+use crate::device::{Device, Devices};
 use crate::mem::MemMap;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct System<C>
 where
-    C: Cpu + ?Sized,
+    C: Cpu,
 {
     pub cpu: Box<C>,
     pub mem: MemMap,
-    pub devices: Option<Vec<Box<dyn Device<C>>>>,
+    devices: Devices<C>,
 }
 
 impl<C> System<C>
@@ -19,34 +21,23 @@ where
         Self {
             cpu: Box::new(cpu),
             mem,
-            devices: Some(Vec::new()),
+            devices: Devices::new(),
         }
-    }
-
-    pub fn add_device(&mut self, device: impl Device<C>) {
-        let boxed = Box::new(device);
-        self.devices.as_mut().unwrap().push(boxed);
     }
 
     pub fn init(&mut self) {
-        let mut devices = self.devices.take().unwrap();
-        for device in &mut devices {
-            device.init(self);
-        }
-        self.devices = Some(devices);
+        let devices = Devices::clone(&self.devices);
+        devices.init_all(self);
 
         self.cpu.init();
     }
 
     pub fn start(&mut self) {
         self.cpu.reset();
-        loop {
-            let mut devices = self.devices.take().unwrap();
-            for device in &mut devices {
-                device.step(self);
-            }
-            self.devices = Some(devices);
 
+        let devices = Devices::clone(&self.devices);
+        loop {
+            devices.step_all(self);
             C::step(self);
         }
     }
@@ -55,82 +46,35 @@ where
         self.init();
         self.start();
     }
-}
 
-macro_rules! filter_port {
-    ($device:ident, $port:ident) => {
-        $device
-            .ports()
-            .iter()
-            .filter(|&(handler_port, _)| *handler_port == $port)
-    };
-}
+    pub fn add_device<D>(&mut self, device: D) -> Rc<RefCell<D>>
+    where
+        D: Device<C> + 'static,
+    {
+        self.devices.push(device)
+    }
 
-impl<C> System<C>
-where
-    C: Cpu,
-{
     pub fn port_in_8(&mut self, port: u16) -> Option<u8> {
-        let mut devices = self.devices.take().unwrap();
-        for device in &mut devices {
-            for (_, handler) in filter_port!(device, port) {
-                if let IoPortHandler::In8(handler) = handler {
-                    let value = handler(&mut **device, self);
-                    self.devices = Some(devices);
-                    return Some(value);
-                }
-            }
-        }
-        self.devices = Some(devices);
+        let devices = Devices::clone(&self.devices);
 
-        None
+        devices.port_in_8(self, port)
     }
 
     pub fn port_in_16(&mut self, port: u16) -> Option<u16> {
-        let mut devices = self.devices.take().unwrap();
-        for device in &mut devices {
-            for (_, handler) in filter_port!(device, port) {
-                if let IoPortHandler::In16(handler) = handler {
-                    let value = handler(&mut **device, self);
-                    self.devices = Some(devices);
-                    return Some(value);
-                }
-            }
-        }
-        self.devices = Some(devices);
+        let devices = Devices::clone(&self.devices);
 
-        None
+        devices.port_in_16(self, port)
     }
 
     pub fn port_out_8(&mut self, port: u16, value: u8) -> Option<()> {
-        let mut devices = self.devices.take().unwrap();
-        for device in &mut devices {
-            for (_, handler) in filter_port!(device, port) {
-                if let IoPortHandler::Out8(handler) = handler {
-                    handler(&mut **device, self, value);
-                    self.devices = Some(devices);
-                    return Some(());
-                }
-            }
-        }
-        self.devices = Some(devices);
+        let devices = Devices::clone(&self.devices);
 
-        None
+        devices.port_out_8(self, port, value)
     }
 
     pub fn port_out_16(&mut self, port: u16, value: u16) -> Option<()> {
-        let mut devices = self.devices.take().unwrap();
-        for device in &mut devices {
-            for (_, handler) in filter_port!(device, port) {
-                if let IoPortHandler::Out16(handler) = handler {
-                    handler(&mut **device, self, value);
-                    self.devices = Some(devices);
-                    return Some(());
-                }
-            }
-        }
-        self.devices = Some(devices);
+        let devices = Devices::clone(&self.devices);
 
-        None
+        devices.port_out_16(self, port, value)
     }
 }

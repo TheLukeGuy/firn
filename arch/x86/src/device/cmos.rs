@@ -1,8 +1,6 @@
+use crate::{Cpu, System};
 use chrono::{DateTime, Datelike, Timelike, Utc};
-use firn_core::cpu::Cpu;
-use firn_core::device::{io_port, io_ports, Device, IoPortHandler};
-use firn_core::System;
-use multimap::MultiMap;
+use firn_core::device::{Device, PortRequest, PortResponse};
 use std::time;
 use std::time::{Duration, SystemTime};
 
@@ -94,40 +92,42 @@ impl Cmos {
 
 // TODO: Remove debug messages
 impl Cmos {
-    #[io_port(0x70)]
-    pub fn select_reg(&mut self, value: u8) {
+    pub fn select_reg(&mut self, value: u8) -> PortResponse {
         // TODO: Implement NMI disable
         let _nmi_disable = value >> 7;
         self.selected_reg = value & !0x80;
 
         println!("Using CMOS register: {:#x}", self.selected_reg);
+
+        PortResponse::Out
     }
 
-    #[io_port(0x71)]
-    pub fn reg_value(&mut self) -> u8 {
+    pub fn reg_value(&mut self) -> PortResponse {
+        let value = self.regs[self.selected_reg as usize];
+
         println!("Read from CMOS register");
-        self.regs[self.selected_reg as usize]
+
+        PortResponse::In8(value)
     }
 
-    #[io_port(0x71)]
-    pub fn set_reg_value(&mut self, value: u8) {
-        println!("Wrote {:#x} to CMOS register", value);
+    pub fn set_reg_value(&mut self, value: u8) -> PortResponse {
         self.regs[self.selected_reg as usize] = value;
+
+        println!("Wrote {:#x} to CMOS register", value);
+
+        PortResponse::Out
     }
 }
 
-impl<C> Device<C> for Cmos
-where
-    C: Cpu + 'static,
-{
-    fn init(&mut self, _sys: &mut System<C>) {
+impl Device<Cpu> for Cmos {
+    fn init(&mut self, _sys: &mut System) {
         let start_time = self.current_time();
         self.start_time = Some(start_time);
 
         self.sync();
     }
 
-    fn step(&mut self, _sys: &mut System<C>) {
+    fn step(&mut self, _sys: &mut System) {
         let current_time = self.current_time().as_micros();
         if current_time - self.last_update_micros < 1_000_000 {
             return;
@@ -181,7 +181,12 @@ where
         self.stop_updating_rtc();
     }
 
-    fn ports(&self) -> MultiMap<u16, IoPortHandler<C>> {
-        io_ports![select_reg, reg_value, set_reg_value]
+    fn handle_port(&mut self, _sys: &mut System, request: PortRequest) -> Option<PortResponse> {
+        match request {
+            PortRequest::Out8(0x70, value) => Some(self.select_reg(value)),
+            PortRequest::In8(0x71) => Some(self.reg_value()),
+            PortRequest::Out8(0x71, value) => Some(self.set_reg_value(value)),
+            _ => None,
+        }
     }
 }

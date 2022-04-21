@@ -6,7 +6,6 @@ edition = "2021"
 [workspace]
 members = [
     "core",
-    "core/macros",
     "desktop",
 
     "arch/x86",

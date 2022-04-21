@@ -1,6 +1,6 @@
 use crate::System;
 
-pub trait Cpu {
+pub trait Cpu: Sized {
     fn init(&mut self) {}
     fn reset(&mut self) {}
 
