@@ -10,4 +10,3 @@ firn-arch-x86-macros = { path = "macros" }
 num-traits = "0.2.14"
 num-derive = "0.3.3"
 chrono = "0.4.19"
-multimap = "0.8.3"
