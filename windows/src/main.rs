@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use firn::arch::x86;
 use firn::arch::x86::device::Cmos;
 use firn::arch::x86::{Cpu, Feature};
@@ -24,8 +26,8 @@ fn main() -> windows::core::Result<()> {
         sys.run();
     });
 
+    let mut message = MSG::default();
     unsafe {
-        let mut message = MSG::default();
         while GetMessageA(&mut message, None, 0, 0).into() {
             TranslateMessage(&message);
             DispatchMessageA(&message);
