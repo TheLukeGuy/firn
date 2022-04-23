@@ -1,8 +1,7 @@
 use crate::cpu::Cpu;
 use crate::device::{Device, Devices};
 use crate::mem::MemMap;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 pub struct System<C>
 where
@@ -47,7 +46,7 @@ where
         self.start();
     }
 
-    pub fn add_device<D>(&mut self, device: D) -> Rc<RefCell<D>>
+    pub fn add_device<D>(&mut self, device: D) -> Arc<Mutex<D>>
     where
         D: Device<C> + 'static,
     {

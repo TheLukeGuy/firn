@@ -1,7 +1,6 @@
 use crate::cpu::Cpu;
 use crate::System;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Copy, Clone)]
 pub enum PortRequest {
@@ -17,7 +16,7 @@ pub enum PortResponse {
     Out,
 }
 
-pub trait Device<C>
+pub trait Device<C>: Send + Sync
 where
     C: Cpu,
 {
@@ -40,7 +39,7 @@ pub struct Devices<C>
 where
     C: Cpu,
 {
-    devices: Vec<Rc<RefCell<dyn Device<C>>>>,
+    devices: Vec<Arc<Mutex<dyn Device<C>>>>,
 }
 
 impl<C> Devices<C>
@@ -53,33 +52,33 @@ where
         }
     }
 
-    pub fn push<D>(&mut self, device: D) -> Rc<RefCell<D>>
+    pub fn push<D>(&mut self, device: D) -> Arc<Mutex<D>>
     where
         D: Device<C> + 'static,
     {
-        let rc = Rc::new(RefCell::new(device));
-        let clone = Rc::clone(&rc);
-        self.devices.push(rc);
+        let arc = Arc::new(Mutex::new(device));
+        let clone = Arc::clone(&arc);
+        self.devices.push(arc);
 
         clone
     }
 
     pub fn init_all(&self, sys: &mut System<C>) {
         for device in &self.devices {
-            device.borrow_mut().init(sys);
+            device.lock().unwrap().init(sys);
         }
     }
 
     pub fn step_all(&self, sys: &mut System<C>) {
         for device in &self.devices {
-            device.borrow_mut().step(sys);
+            device.lock().unwrap().step(sys);
         }
     }
 
     pub fn port_in_8(&self, sys: &mut System<C>, port: u16) -> Option<u8> {
         let request = PortRequest::In8(port);
         for device in &self.devices {
-            let value = device.borrow_mut().handle_port(sys, request);
+            let value = device.lock().unwrap().handle_port(sys, request);
             if let Some(PortResponse::In8(value)) = value {
                 return Some(value);
             }
@@ -91,7 +90,7 @@ where
     pub fn port_in_16(&self, sys: &mut System<C>, port: u16) -> Option<u16> {
         let request = PortRequest::In16(port);
         for device in &self.devices {
-            let value = device.borrow_mut().handle_port(sys, request);
+            let value = device.lock().unwrap().handle_port(sys, request);
             if let Some(PortResponse::In16(value)) = value {
                 return Some(value);
             }
@@ -114,7 +113,7 @@ where
 
     fn port_out(&self, sys: &mut System<C>, request: PortRequest) -> Option<()> {
         for device in &self.devices {
-            let value = device.borrow_mut().handle_port(sys, request);
+            let value = device.lock().unwrap().handle_port(sys, request);
             if let Some(PortResponse::Out) = value {
                 return Some(());
             }

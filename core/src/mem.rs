@@ -31,7 +31,7 @@ pub fn format_str_dump(radix: DumpRadix, iter: impl Iterator<Item = u8>) -> Stri
     .join(" ")
 }
 
-pub trait Mem: Index<usize, Output = u8> + IndexMut<usize> {
+pub trait Mem: Index<usize, Output = u8> + IndexMut<usize> + Send + Sync {
     fn size(&self) -> usize;
 
     fn dump(&self) -> Vec<u8>;
