@@ -8,12 +8,16 @@ use firn::mem::{BasicMem, Eeprom, MemMap};
 use firn::System;
 use std::{mem, ptr, thread};
 use windows::core::PCSTR;
-use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
+use windows::Win32::Graphics::Gdi::{
+    BeginPaint, DrawTextA, EndPaint, DT_CENTER, DT_SINGLELINE, DT_VCENTER, HBRUSH, PAINTSTRUCT,
+};
 use windows::Win32::System::LibraryLoader::GetModuleHandleA;
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExA, DefWindowProcA, DispatchMessageA, GetMessageA, LoadCursorW, MessageBoxA,
-    PostQuitMessage, RegisterClassExA, TranslateMessage, CW_USEDEFAULT, IDC_ARROW,
-    MB_ICONEXCLAMATION, MB_OK, MSG, WM_DESTROY, WNDCLASSEXA, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+    CreateWindowExA, DefWindowProcA, DispatchMessageA, GetClientRect, GetMessageA, LoadCursorW,
+    MessageBoxA, PostQuitMessage, RegisterClassExA, TranslateMessage, COLOR_WINDOW, CS_HREDRAW,
+    CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, MB_ICONEXCLAMATION, MB_OK, MSG, WM_DESTROY, WM_PAINT,
+    WNDCLASSEXA, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
 };
 
 fn main() -> windows::core::Result<()> {
@@ -60,9 +64,11 @@ unsafe fn create_window() -> windows::core::Result<Option<HWND>> {
     let instance = GetModuleHandleA(None);
     let window_class = WNDCLASSEXA {
         cbSize: mem::size_of::<WNDCLASSEXA>() as u32,
+        style: CS_HREDRAW | CS_VREDRAW,
         lpfnWndProc: Some(window_proc),
         hInstance: instance,
         hCursor: LoadCursorW(None, IDC_ARROW)?,
+        hbrBackground: HBRUSH((COLOR_WINDOW.0 as isize) + 1),
         lpszClassName: PCSTR(b"Window\0".as_ptr()),
         ..Default::default()
     };
@@ -113,6 +119,21 @@ unsafe extern "system" fn window_proc(
     lparam: LPARAM,
 ) -> LRESULT {
     match message {
+        WM_PAINT => {
+            let mut paint_struct = PAINTSTRUCT::default();
+            let hdc = BeginPaint(window, &mut paint_struct);
+
+            let mut rect = RECT::default();
+            GetClientRect(window, &mut rect);
+            DrawTextA(
+                hdc,
+                "Waiting for the guest to initialize the display...".as_ref(),
+                &mut rect,
+                DT_SINGLELINE | DT_CENTER | DT_VCENTER,
+            );
+
+            EndPaint(window, &paint_struct);
+        }
         WM_DESTROY => {
             PostQuitMessage(0);
         }
