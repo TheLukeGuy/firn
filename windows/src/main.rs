@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use firn::arch::x86;
-use firn::arch::x86::device::Cmos;
+use firn::arch::x86::device::{Cmos, DualPic};
 use firn::arch::x86::{Cpu, Feature};
 use firn::cpu::Restrict;
 use firn::mem::{BasicMem, Eeprom, MemMap};
@@ -52,9 +52,11 @@ fn create_sys() -> System<Cpu> {
     let mut cpu = Cpu::new();
     cpu.add_feature(Feature::InstrCpu1);
 
+    let pic = DualPic::new();
     let cmos = Cmos::new_current_time();
 
     let mut sys = System::new(cpu, map);
+    sys.add_device(pic);
     sys.add_device(cmos);
 
     sys
