@@ -24,6 +24,10 @@ pub struct Pic {
     pub pic_type: PicType,
     pub vector_offset: u8,
 
+    pub request_reg: u8,
+    pub in_service_reg: u8,
+    pub mask_reg: u8,
+
     awaiting_icw: InitControlWord,
     expecting_icw: InitControlWord,
 }
@@ -34,12 +38,21 @@ impl Pic {
             pic_type,
             vector_offset: 0,
 
+            request_reg: 0,
+            in_service_reg: 0,
+            mask_reg: 0,
+
             awaiting_icw: InitControlWord::Icw1,
             expecting_icw: InitControlWord::Icw2,
         }
     }
 
-    pub fn handle_command(&mut self, command: u8) {
+    pub fn submit_irq(&mut self, irq: u8) {
+        assert!(irq < 8);
+        self.request_reg |= 1 << irq;
+    }
+
+    fn handle_command(&mut self, command: u8) {
         let init = command & 0x10 != 0;
         if init {
             let expecting_icw_4 = command & 0x1 != 0;
@@ -57,9 +70,13 @@ impl Pic {
         todo!("handle OCW2 and OCW3");
     }
 
-    pub fn handle_data_write(&mut self, data: u8) {
+    fn handle_data_read(&mut self) -> u8 {
+        self.mask_reg
+    }
+
+    fn handle_data_write(&mut self, data: u8) {
         match self.awaiting_icw {
-            InitControlWord::Icw1 => todo!("set ISR or IRR"),
+            InitControlWord::Icw1 => self.mask_reg = data,
             InitControlWord::Icw2 => {
                 self.vector_offset = data;
                 self.await_icw_if_expected(InitControlWord::Icw3);
@@ -96,6 +113,10 @@ impl Device<Cpu> for Pic {
                 self.handle_command(command);
                 Some(PortResponse::Out)
             }
+            PortRequest::In8(port) if port == data_port => {
+                let data = self.handle_data_read();
+                Some(PortResponse::In8(data))
+            }
             PortRequest::Out8(port, data) if port == data_port => {
                 self.handle_data_write(data);
                 Some(PortResponse::Out)
@@ -117,6 +138,15 @@ impl DualPic {
             slave: Pic::new(PicType::Slave),
         }
     }
+
+    pub fn submit_irq(&mut self, irq: u8) {
+        if irq < 8 {
+            self.master.submit_irq(irq);
+        } else {
+            let irq = irq - 8;
+            self.slave.submit_irq(irq);
+        }
+    }
 }
 
 impl Device<Cpu> for DualPic {
@@ -126,6 +156,10 @@ impl Device<Cpu> for DualPic {
                 self.master.handle_command(command);
                 Some(PortResponse::Out)
             }
+            PortRequest::In8(port) if port == MASTER_DATA_PORT => {
+                let data = self.master.handle_data_read();
+                Some(PortResponse::In8(data))
+            }
             PortRequest::Out8(port, data) if port == MASTER_DATA_PORT => {
                 self.master.handle_data_write(data);
                 Some(PortResponse::Out)
@@ -134,6 +168,10 @@ impl Device<Cpu> for DualPic {
             PortRequest::Out8(port, command) if port == SLAVE_COMMAND_PORT => {
                 self.slave.handle_command(command);
                 Some(PortResponse::Out)
+            }
+            PortRequest::In8(port) if port == SLAVE_DATA_PORT => {
+                let data = self.slave.handle_data_read();
+                Some(PortResponse::In8(data))
             }
             PortRequest::Out8(port, data) if port == SLAVE_DATA_PORT => {
                 self.slave.handle_data_write(data);
