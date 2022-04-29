@@ -3,6 +3,8 @@ use crate::GeneralWordReg::{Ax, Dx};
 use crate::{arith, GeneralByteReg, GeneralWordReg, RegMem, System};
 use firn_arch_x86_macros::{arith_instr, instr};
 
+// See ../arith.rs for all of the operation functions that are used when arith_instr! is expanded
+
 arith_instr!(ADD);
 arith_instr!(ADC);
 arith_instr!(SUB);

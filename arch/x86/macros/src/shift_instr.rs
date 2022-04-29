@@ -28,7 +28,7 @@ pub fn shift_instr_impl(input: TokenStream) -> TokenStream {
         #[firn_arch_x86_macros::instr(#rm8_1_attr)]
         pub fn #rm8_1(sys: &mut crate::System, rm: crate::RegMem) {
             let old = rm.get_8(sys);
-            let value = #operation_8(sys, old, 1);
+            let value = crate::arith::#operation_8(sys, old, 1);
             rm.set_8(sys, value);
         }
 
@@ -36,21 +36,21 @@ pub fn shift_instr_impl(input: TokenStream) -> TokenStream {
         pub fn #rm8_cl(sys: &mut crate::System, rm: crate::RegMem) {
             let old = rm.get_8(sys);
             let reg = sys.cpu.reg_8(crate::GeneralByteReg::Cl);
-            let value = #operation_8(sys, old, reg);
+            let value = crate::arith::#operation_8(sys, old, reg);
             rm.set_8(sys, value);
         }
 
         #[firn_arch_x86_macros::instr(#rm8_imm8_attr)]
         pub fn #rm8_imm8(sys: &mut crate::System, rm: crate::RegMem, imm: u8) {
             let old = rm.get_8(sys);
-            let value = #operation_8(sys, old, imm);
+            let value = crate::arith::#operation_8(sys, old, imm);
             rm.set_8(sys, value);
         }
 
         #[firn_arch_x86_macros::instr(#rm16_1_attr)]
         pub fn #rm16_1(sys: &mut crate::System, rm: crate::RegMem) {
             let old = rm.get_16(sys);
-            let value = #operation_16(sys, old, 1);
+            let value = crate::arith::#operation_16(sys, old, 1);
             rm.set_16(sys, value);
         }
 
@@ -58,14 +58,14 @@ pub fn shift_instr_impl(input: TokenStream) -> TokenStream {
         pub fn #rm16_cl(sys: &mut crate::System, rm: crate::RegMem) {
             let old = rm.get_16(sys);
             let reg = sys.cpu.reg_8(crate::GeneralByteReg::Cl);
-            let value = #operation_16(sys, old, reg);
+            let value = crate::arith::#operation_16(sys, old, reg);
             rm.set_16(sys, value);
         }
 
         #[firn_arch_x86_macros::instr(#rm16_imm8_attr)]
         pub fn #rm16_imm8(sys: &mut crate::System, rm: crate::RegMem, imm: u8) {
             let old = rm.get_16(sys);
-            let value = #operation_16(sys, old, imm);
+            let value = crate::arith::#operation_16(sys, old, imm);
             rm.set_16(sys, value);
         }
     };
