@@ -67,3 +67,45 @@ macro_rules! basic_mem_impl {
 }
 
 pub(crate) use basic_mem_impl;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_iter() -> impl Iterator<Item = u8> {
+        let vec: Vec<u8> = vec![6, 12, 126, 58, 207, 192];
+
+        vec.into_iter()
+    }
+
+    #[test]
+    fn should_format_dump_binary() {
+        let iter = create_test_iter();
+        let str_dump = format_str_dump(DumpRadix::Binary, iter);
+        assert_eq!(
+            "00000110 00001100 01111110 00111010 11001111 11000000",
+            str_dump
+        );
+    }
+
+    #[test]
+    fn should_format_dump_octal() {
+        let iter = create_test_iter();
+        let str_dump = format_str_dump(DumpRadix::Octal, iter);
+        assert_eq!("006 014 176 072 317 300", str_dump);
+    }
+
+    #[test]
+    fn should_format_dump_decimal() {
+        let iter = create_test_iter();
+        let str_dump = format_str_dump(DumpRadix::Decimal, iter);
+        assert_eq!("006 012 126 058 207 192", str_dump);
+    }
+
+    #[test]
+    fn should_format_dump_hexadecimal() {
+        let iter = create_test_iter();
+        let str_dump = format_str_dump(DumpRadix::Hexadecimal, iter);
+        assert_eq!("06 0c 7e 3a cf c0", str_dump);
+    }
+}
