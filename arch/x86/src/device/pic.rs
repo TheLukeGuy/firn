@@ -30,6 +30,11 @@ pub struct Pic {
 
     awaiting_icw: InitControlWord,
     expecting_icw: InitControlWord,
+
+    pub ocw2: u8,
+    pub ocw3: u8,
+
+    priority: u8,
 }
 
 impl Pic {
@@ -44,6 +49,9 @@ impl Pic {
 
             awaiting_icw: InitControlWord::Icw1,
             expecting_icw: InitControlWord::Icw2,
+            ocw2: 0,
+            ocw3: 0,
+            priority: 0,
         }
     }
 
@@ -66,8 +74,33 @@ impl Pic {
             self.awaiting_icw = InitControlWord::Icw2;
             return;
         }
+        
+        let ocw3 = command & 0x08 != 0;
 
-        todo!("handle OCW2 and OCW3");
+        if ocw3 {
+            self.ocw3 = command;
+        }
+        else {
+            self.ocw2 = command;
+
+            if self.ocw2 & 0x60 != 0 {
+                if self.ocw2 & 0x40 != 0 {
+                    let eoi = self.ocw2 & 0x20 != 0;
+                    let rotate = self.ocw2 & 0x80 != 0;
+
+                    let irq = self.ocw2 & 0x07;
+                    let b: u8 = 1 << irq;
+
+                    if eoi {
+                        self.in_service_reg &= !b;
+                    }
+                    
+                    if rotate {
+                        self.priority = irq.wrapping_add(1) & 7;
+                    }
+                }
+            }
+        }
     }
 
     fn handle_data_read(&mut self) -> u8 {
