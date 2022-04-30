@@ -26,7 +26,7 @@ impl Flags {
     }
 
     pub fn get_8(&self) -> u8 {
-        let mut value = 0;
+        let mut value = 0x2;
 
         if self.carry {
             value |= 0x001;
@@ -48,7 +48,7 @@ impl Flags {
     }
 
     pub fn get_16(&self) -> u16 {
-        let mut value = self.get_8() as u16;
+        let mut value = self.get_8() as u16 | 0xf000;
 
         if self.trap {
             value |= 0x100;
@@ -114,5 +114,62 @@ impl Flags {
 impl Default for Flags {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_flags() -> Flags {
+        Flags {
+            carry: true,
+            parity: true,
+            adjust: false,
+            zero: true,
+            sign: false,
+            trap: true,
+            interrupt: false,
+            direction: false,
+            overflow: true,
+        }
+    }
+
+    #[test]
+    fn should_convert_to_u8_correctly() {
+        let flags = create_test_flags();
+        let converted = flags.get_8();
+        assert_eq!(0b01000111, converted);
+    }
+
+    #[test]
+    fn should_convert_to_u16_correctly() {
+        let flags = create_test_flags();
+        let converted = flags.get_16();
+        assert_eq!(0b1111100101000111, converted);
+    }
+
+    #[test]
+    fn should_convert_from_u8_correctly() {
+        let mut flags = Flags::new();
+        flags.set_8(0b01000111);
+        assert!(flags.carry && flags.parity && !flags.adjust && flags.zero && !flags.sign);
+    }
+
+    #[test]
+    fn should_convert_from_u16_correctly() {
+        let mut flags = Flags::new();
+        flags.set_16(0b1111100101000111);
+        assert!(
+            flags.carry
+                && flags.parity
+                && !flags.adjust
+                && flags.zero
+                && !flags.sign
+                && flags.trap
+                && !flags.interrupt
+                && !flags.direction
+                && flags.overflow
+        );
     }
 }

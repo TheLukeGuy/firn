@@ -136,3 +136,105 @@ impl Default for Cpu {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::GeneralByteReg::{Ah, Al, Bh, Cl};
+    use crate::GeneralWordReg::{Ax, Bp, Cx};
+
+    #[test]
+    fn should_read_and_write_byte_reg() {
+        let mut cpu = Cpu::new();
+        cpu.set_reg_8(Bh, 39);
+        assert_eq!(39, cpu.reg_8(Bh));
+    }
+
+    #[test]
+    fn should_read_and_write_word_reg() {
+        let mut cpu = Cpu::new();
+        cpu.set_reg_16(Cx.into(), 1621);
+        assert_eq!(1621, cpu.reg_16(Cx.into()));
+    }
+
+    #[test]
+    fn should_read_and_write_segment_reg() {
+        let mut cpu = Cpu::new();
+        cpu.set_reg_16(Ss.into(), 354);
+        assert_eq!(354, cpu.reg_16(Ss.into()));
+    }
+
+    #[test]
+    fn should_set_lsb_of_word_reg() {
+        let mut cpu = Cpu::new();
+        cpu.set_reg_8(Al, 82);
+        assert_eq!(82, cpu.reg_16(Ax.into()));
+    }
+
+    #[test]
+    fn should_set_msb_of_word_reg() {
+        let mut cpu = Cpu::new();
+        cpu.set_reg_8(Ah, 82);
+        assert_eq!(82 << 8, cpu.reg_16(Ax.into()));
+    }
+
+    #[test]
+    fn should_increment_and_wrap_byte_reg() {
+        let mut cpu = Cpu::new();
+        cpu.inc_reg_8(Cl, 189);
+        cpu.inc_reg_8(Cl, 189);
+        assert_eq!(122, cpu.reg_8(Cl));
+    }
+
+    #[test]
+    fn should_decrement_and_wrap_byte_reg() {
+        let mut cpu = Cpu::new();
+        cpu.dec_reg_8(Cl, 2);
+        assert_eq!(254, cpu.reg_8(Cl));
+    }
+
+    #[test]
+    fn should_increment_and_wrap_word_reg() {
+        let mut cpu = Cpu::new();
+        cpu.inc_reg_16(Bp.into(), u16::MAX);
+        cpu.inc_reg_16(Bp.into(), 59);
+        assert_eq!(58, cpu.reg_16(Bp.into()));
+    }
+
+    #[test]
+    fn should_decrement_and_wrap_word_reg() {
+        let mut cpu = Cpu::new();
+        cpu.dec_reg_16(Bp.into(), 8090);
+        assert_eq!(57446, cpu.reg_16(Bp.into()));
+    }
+
+    #[test]
+    fn should_increment_and_wrap_segment_reg() {
+        let mut cpu = Cpu::new();
+        cpu.inc_reg_16(Ds.into(), u16::MAX);
+        cpu.inc_reg_16(Ds.into(), 59);
+        assert_eq!(58, cpu.reg_16(Ds.into()));
+    }
+
+    #[test]
+    fn should_decrement_and_wrap_segment_reg() {
+        let mut cpu = Cpu::new();
+        cpu.dec_reg_16(Ds.into(), 8090);
+        assert_eq!(57446, cpu.reg_16(Ds.into()));
+    }
+
+    #[test]
+    fn should_increment_ip_with_byte() {
+        let mut cpu = Cpu::new();
+        cpu.inc_ip_8(87);
+        assert_eq!(87, cpu.ip);
+    }
+
+    #[test]
+    fn should_increment_and_wrap_ip() {
+        let mut cpu = Cpu::new();
+        cpu.inc_ip_16(u16::MAX);
+        cpu.inc_ip_16(25);
+        assert_eq!(24, cpu.ip);
+    }
+}
