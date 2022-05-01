@@ -396,7 +396,16 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    let doc_comment = format!(
+        "The `{}` instruction.\n\
+        \n\
+        This function is called by the CPU when the `{0}` instruction is decoded. It should never \
+        be called manually.",
+        mnemonic_str.value()
+    );
+
     let expanded = quote! {
+        #[doc = #doc_comment]
         #vis fn #fn_name(sys: &mut crate::System, opcode: u8, prefixes: &crate::Prefixes) {
             #input
 
@@ -408,6 +417,7 @@ pub fn instr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
             #fn_call
         }
 
+        #[doc(hidden)]
         #vis fn #meta_fn_name() -> crate::InstrMeta {
             crate::InstrMeta {
                 mnemonic: String::from(#mnemonic_str),

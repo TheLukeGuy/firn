@@ -6,7 +6,11 @@ use crate::System;
 /// instruction in memory, decode it, and execute it. They must implement `Cpu` to be usable inside
 /// of a [`System`] instance.
 ///
+/// CPUs should not rely on any [`Device`]s being present. If a specific device is absolutely
+/// necessary for the CPU to function, make it part of the CPU.
+///
 /// [`System`]: crate::System
+/// [`Device`]: crate::device::Device
 pub trait Cpu: Sized {
     /// Initializes the CPU.
     ///
@@ -25,7 +29,8 @@ pub trait Cpu: Sized {
     /// Resets the CPU.
     ///
     /// This is called in [`System::start`] (and therefore [`System::run`]) right before the
-    /// execution loop begins. For tasks that need to be run only once, implement [`init`] instead.
+    /// execution loop begins. The CPU will always be initialized before it's reset. For tasks that
+    /// need to be run only once, implement [`init`] instead.
     ///
     /// If this method isn't implemented, the `Cpu` will do nothing when it's reset.
     ///
@@ -36,10 +41,11 @@ pub trait Cpu: Sized {
 
     /// Executes the next iteration of the CPU.
     ///
-    /// This is called constantly while the [`System`] is running. You probably want to decode and
-    /// execute a single instruction in this method.
+    /// This is called constantly while the [`System`] is running, after all [`Device`]s are
+    /// stepped. You probably want to decode and execute a single instruction in this method.
     ///
     /// [`System`]: crate::System
+    /// [`Device`]: crate::device::Device
     fn step(sys: &mut System<Self>);
 }
 
@@ -55,6 +61,8 @@ pub trait Cpu: Sized {
 /// sets and extensions rather than things like improved speed. They should be modeled after
 /// real-world features whenever possible (for example, an x86 CPU could have features for Intel
 /// 80186 instructions, protected mode, MMX, AMD64, etc.)
+///
+/// [`add_feature`]: Restrict::add_feature
 ///
 /// # Examples
 ///
@@ -112,8 +120,6 @@ pub trait Cpu: Sized {
 /// cpu_v2.add_feature(Feature::AllInstructions);
 /// assert!(cpu_v2.is_valid_instruction(0x98));
 /// ```
-///
-/// [`add_feature`]: Restrict::add_feature
 pub trait Restrict {
     /// The feature type, usually an `enum`.
     type Feature: PartialEq;
