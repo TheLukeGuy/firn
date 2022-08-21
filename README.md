@@ -1,3 +1,6 @@
+> **Warning**
+> This project is archived (and very incomplete)! It will eventually be replaced with individual projects for some systems.
+
 # :snowflake: Firn
 
 Firn is a generic system emulator, emulating full systems of numerous architectures (currently only x86).
